@@ -112,7 +112,7 @@ class LaravelServiceProvider extends ServiceProvider
         config([
             'bugsnag.api_key' => $bugsnagApiKey,
             'bugsnag.notify_release_stages' => ['production', 'develop', 'staging'],
-            'bugsnag.auto_capture_sessions' => true,
+            'bugsnag.auto_capture_sessions' => $this->app->environment(['production', 'develop', 'staging']),
         ]);
 
         // https://docs.bugsnag.com/platforms/php/laravel/
