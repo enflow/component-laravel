@@ -20,7 +20,7 @@ class MigrationServiceProvider extends ServiceProvider
             {
                 public function run($paths = [], array $options = [])
                 {
-                    if (app()->environment() === 'local' && !in_array(config('database.connections.mysql.host'), ['127.0.0.1', 'db.clu0.enflow.nl'])) {
+                    if (app()->environment() === 'local' && !in_array(config('database.connections.mysql.host'), ['127.0.0.1', 'localhost', 'mysql', 'db.clu0.enflow.nl'])) {
                         $this->note('<error>Unable to migrate: connected to external database source.</error>');
 
                         return [];
