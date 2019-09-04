@@ -30,10 +30,6 @@ class LaravelServiceProvider extends ServiceProvider
             throw new LogicException("Unable to setup custom error template. Please extend the '\\Enflow\\Component\\Laravel\\AbstractExceptionHandler' class in your '\\App\\Exceptions\\Handler' file.");
         }
 
-        if (!config('services.bugsnag.api_key')) {
-            throw new LogicException("Unable to setup bugsnag/bugsnag-laravel: no access token set");
-        }
-
         if ($this->app->environment() === 'local') {
             // Allow ngrok
             config(['trustedproxy.proxies' => '*']);
