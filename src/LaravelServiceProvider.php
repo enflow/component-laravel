@@ -86,7 +86,7 @@ class LaravelServiceProvider extends ServiceProvider
     private function mailSettings()
     {
         // Ensure we cannot misconfigure locally to send real emails
-        if (!in_array($this->app->environment(), ['production', 'develop']) && !in_array(config('mail.driver', ['log', 'array']), ['production', 'develop']) && config('mail.mailtrap', true) && config('mail.host') !== 'mailtrap.io' && config('mail.host') !== 'smtp.mailtrap.io') {
+        if (!in_array($this->app->environment(), ['production', 'develop']) && !in_array(config('mail.driver'), ['log', 'array']) && config('mail.mailtrap', true) && config('mail.host') !== 'mailtrap.io' && config('mail.host') !== 'smtp.mailtrap.io') {
             config([
                 'mail.driver' => 'smtp',
                 'mail.host' => 'smtp.mailtrap.io',
