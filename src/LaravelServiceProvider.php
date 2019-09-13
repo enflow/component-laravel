@@ -76,7 +76,10 @@ class LaravelServiceProvider extends ServiceProvider
             // Everything should be configured in the app. We just ensure there that local & testing exceptions aren't sent to Flare
 
             if ($this->app->environment('local', 'testing')) {
-                config(['flare.key' => null]);
+                config([
+                    'flare.key' => null,
+                    'logging.channels.stack.channels' => ['single'],
+                ]);
             }
         }
 
