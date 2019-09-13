@@ -2,6 +2,7 @@
 
 namespace Enflow\Component\Laravel;
 
+use Enflow\Component\Laravel\Exceptions\MailConfigurationMissingException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Contracts\Debug\ExceptionHandler as IlluminateExceptionHandler;
 use Illuminate\Support\Facades\Schema;
@@ -71,6 +72,14 @@ class LaravelServiceProvider extends ServiceProvider
             $this->registerBugsnag($bugsnagApiKey);
         }
 
+        if ($flareApiKey = config('flare.key')) {
+            // Everything should be configured in the app. We just ensure there that local & testing exceptions aren't sent to Flare
+
+            if ($this->app->environment('local', 'testing')) {
+                config(['flare.key' => null]);
+            }
+        }
+
         // Ensure the host is set correctly when using ngrok (https://trello.com/c/36euiq0A/285-ngrok-originalhost-handling)
         if ($this->app->environment() === 'local' && isset($_SERVER['HTTP_X_ORIGINAL_HOST'])) {
             request()->headers->set('host', $_SERVER['HTTP_X_ORIGINAL_HOST']);
@@ -86,14 +95,8 @@ class LaravelServiceProvider extends ServiceProvider
     private function mailSettings()
     {
         // Ensure we cannot misconfigure locally to send real emails
-        if (!in_array($this->app->environment(), ['production', 'develop']) && !in_array(config('mail.driver'), ['log', 'array']) && config('mail.mailtrap', true) && config('mail.host') !== 'mailtrap.io' && config('mail.host') !== 'smtp.mailtrap.io') {
-            config([
-                'mail.driver' => 'smtp',
-                'mail.host' => 'smtp.mailtrap.io',
-                'mail.port' => 2525,
-                'mail.username' => null,
-                'mail.password' => null,
-            ]);
+        if (!in_array($this->app->environment(), ['production', 'develop']) && !in_array(config('mail.driver'), ['log', 'array']) && config('mail.mailtrap', true) && !in_array(config('mail.host'), ['mailtrap.io', 'smtp.mailtrap.io', 'smtp.mailspons.com'])) {
+            throw new Exceptions\MailConfigurationMissingException("The mail configuration is missing. Please setup a local SMTP trap like mailtrap.io or mailspons.com or use the log or array driver.");
         }
 
         if (config('mail.from.name') === null) {
