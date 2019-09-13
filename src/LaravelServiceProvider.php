@@ -52,6 +52,7 @@ class LaravelServiceProvider extends ServiceProvider
         $kernel = $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
         $kernel->pushMiddleware(Http\Middleware\RemoveIndexPhp::class);
         $kernel->pushMiddleware(Http\Middleware\SecurityHeaders::class);
+        $kernel->pushMiddleware(Http\Middleware\Robots::class);
 
         $this->commands([
             Console\Commands\DbSync::class,
