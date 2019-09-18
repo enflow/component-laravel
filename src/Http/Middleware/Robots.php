@@ -14,7 +14,7 @@ class Robots
         $response = $next($request);
 
         if ($response instanceof Response && config('laravel.robots_headers', true)) {
-            $response->headers->set('x-robots-tag',  app()->environment('production') ? 'all' : 'none', false);
+            $response->headers->set('x-robots-tag', app()->environment('production') ? 'all' : 'none', false);
         }
 
         return $response;
