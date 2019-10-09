@@ -12,6 +12,7 @@ use Illuminate\Foundation\Application;
 use Enflow\Component\Laravel\Cluster\ClusterStore;
 use Illuminate\Support\Str;
 use LogicException;
+use Symfony\Component\Process\Process;
 
 class LaravelServiceProvider extends ServiceProvider
 {
@@ -99,8 +100,12 @@ class LaravelServiceProvider extends ServiceProvider
     private function mailSettings()
     {
         // Ensure we cannot misconfigure locally to send real emails
-        if (!in_array($this->app->environment(), ['production', 'develop']) && !in_array(config('mail.driver'), ['log', 'array']) && config('mail.mailtrap', true) && !in_array(config('mail.host'), ['mailtrap.io', 'smtp.mailtrap.io', 'smtp.mailspons.com'])) {
+        if (in_array($this->app->environment(), ['local']) && !in_array(config('mail.driver'), ['log', 'array']) && config('mail.mailtrap', true) && !in_array(config('mail.host'), ['mailtrap.io', 'smtp.mailtrap.io', 'smtp.mailspons.com'])) {
             throw new Exceptions\MailConfigurationMissingException("The mail configuration is missing. Please setup a local SMTP trap like mailtrap.io or mailspons.com or use the log or array driver.");
+        }
+
+        if (in_array($this->app->environment(), ['testing']) && !in_array(config('mail.driver'), ['log', 'array'])) {
+            config(['mail.driver' => 'array']);
         }
 
         if (config('mail.from.name') === null) {
