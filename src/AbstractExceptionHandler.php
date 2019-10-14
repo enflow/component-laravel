@@ -20,9 +20,9 @@ abstract class AbstractExceptionHandler extends Handler
     protected function registerErrorViewPaths()
     {
         View::replaceNamespace('errors', [
-            resource_path('views/errors'),
-            __DIR__ . '/../resources/errors',
-            __DIR__ . '/views',
+            resource_path('views/errors'), // The views of the application
+            __DIR__ . '/../resources/errors', // The default component-laravel views
+            base_path('vendor/laravel/framework/src/Illuminate/Foundation/Exceptions/views'), // The default Laravel error views
         ]);
     }
 }
