@@ -32,6 +32,10 @@ class LaravelServiceProvider extends ServiceProvider
             throw new LogicException("Unable to setup custom error template. Please extend the '\\Enflow\\Component\\Laravel\\AbstractExceptionHandler' class in your '\\App\\Exceptions\\Handler' file.");
         }
 
+        if (config('queue.default') === 'beanstalkd' && config('queue.connections.beanstalkd.queue') === 'default') {
+            throw new LogicException("Unable to setup queue, beanstalkd is listing to 'default' queue which conflicts with other application. Please ensure that the correct queue is set. Prefered format: 'applicationname_env'. Example: 'mijnenflow_production'");
+        }
+
         if ($this->app->environment() === 'local') {
             // Allow ngrok
             config(['trustedproxy.proxies' => '*']);
