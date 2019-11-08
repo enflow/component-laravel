@@ -4,11 +4,13 @@ namespace Enflow\Component\Laravel\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class SecurityHeaders
 {
     public function handle(Request $request, Closure $next)
     {
+        /** @var Response $response */
         $response = $next($request);
 
         // Referrer Policy is a new header that allows a site to control how much information the browser includes with navigations away from a document and should be set by all sites.
@@ -21,7 +23,7 @@ class SecurityHeaders
 
         // Preventing Clickjacking
         // frame-ancestors 'self'; -> breaks Beamy as the viewer iframes the screens
-        $response->headers->set('Content-Security-Policy', "report-uri \"https://enflow.report-uri.com/r/d/csp/reportOnly\"");
+        $response->headers->set('Content-Security-Policy', "report-uri \"https://enflow.report-uri.com/r/d/csp/reportOnly\"", false);
 
         // Feature policy
         $response->headers->set('Feature-Policy', "accelerometer *; camera *; geolocation *; gyroscope *; microphone *; payment *; magnetometer 'none'; usb 'none'");
@@ -29,3 +31,4 @@ class SecurityHeaders
         return $response;
     }
 }
+
