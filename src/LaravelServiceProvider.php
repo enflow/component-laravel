@@ -13,6 +13,7 @@ use Enflow\Component\Laravel\Cluster\ClusterStore;
 use Illuminate\Support\Str;
 use LogicException;
 use Symfony\Component\Process\Process;
+use Facade\Ignition\Facades\Flare;
 
 class LaravelServiceProvider extends ServiceProvider
 {
@@ -69,6 +70,10 @@ class LaravelServiceProvider extends ServiceProvider
             $this->app->make('bugsnag')->setAppVersion(cache()->rememberForever('appVersion-' . config('app.name'), function () {
                 return $output = exec("cd {$this->app->basePath()}; git describe --always --tags");
             }));
+        }
+
+        if ($flareApiKey = config('flare.key')) {
+            Flare::context('Hostname', gethostname());
         }
     }
 
