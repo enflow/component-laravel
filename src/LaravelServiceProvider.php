@@ -62,6 +62,7 @@ class LaravelServiceProvider extends ServiceProvider
 
         $this->commands([
             Console\Commands\DbSync::class,
+            Console\Commands\ResetCredentials::class,
         ]);
 
         $this->setClusterVariables();
