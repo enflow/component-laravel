@@ -26,7 +26,7 @@ class DbSync extends Command
         $hostname = config('syncer.hostname') ?? $this->ask('Syncer hostname?', 'web0.clu0.enflow.nl');
         $username = config('syncer.username') ?? $this->ask('Syncer username?');
         $password = config('syncer.password') ?? $this->ask('Syncer password?');
-        $database = $this->choice('Which database do you want to import?', config('syncer.databases', $username));
+        $database = config('syncer.databases') ? $this->choice('Which database do you want to import?', config('syncer.databases')) : [$username];
 
         if (app()->environment() == 'production') {
             $this->error('Cannot run in production');
