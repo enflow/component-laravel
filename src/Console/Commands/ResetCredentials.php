@@ -23,7 +23,7 @@ class ResetCredentials extends Command
             return;
         }
 
-        if (!in_array(config('database.connections.mysql.host'), ['127.0.0.1', 'localhost'])) {
+        if (!in_array(gethostbyname(config('database.connections.mysql.host')), ['127.0.0.1', 'localhost'])) {
             $this->error('Cannot sync: MySQL host is configured to an external connection.');
 
             return;

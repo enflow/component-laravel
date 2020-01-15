@@ -6,9 +6,11 @@ use Enflow\Component\Laravel\Events\DatabaseSynced;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class DbSync extends Command
 {
@@ -23,10 +25,10 @@ class DbSync extends Command
         // FLUSH PRIVILEGES;
         // Add to Forge network tab as well
 
-        $hostname = config('syncer.hostname') ?? $this->ask('Syncer hostname?', 'web0.clu0.enflow.nl');
+        $hostname = config('syncer.hostname') ?? $this->ask('Syncer hostname?', 'db.clu0.enflow.nl');
         $username = config('syncer.username') ?? $this->ask('Syncer username?');
-        $password = config('syncer.password') ?? $this->ask('Syncer password?');
-        $database = config('syncer.databases') ? $this->choice('Which database do you want to import?', config('syncer.databases')) : [$username];
+        $password = config('syncer.password') ?? $this->secret('Syncer password?');
+        $database = config('syncer.databases') ? $this->choice('Which database do you want to import?', config('syncer.databases')) : $username;
 
         if (app()->environment() == 'production') {
             $this->error('Cannot run in production');
@@ -46,7 +48,7 @@ class DbSync extends Command
             $this->info('Exporting ' . $database);
 
             $columnStatistics = version_compare($this->mysqlVersion(), '8.0', '>=') ? '--column-statistics=0' : null;
-            $flags = "{$columnStatistics} --ssl-mode=REQUIRED --opt --single-transaction --extended-insert --skip-lock-tables --quick --routines -u{$username} -p{$password} -h{$hostname}";
+            $flags = "{$columnStatistics} --ssl-mode=REQUIRED --opt --single-transaction --extended-insert --skip-add-locks --skip-lock-tables --quick --routines -u{$username} -p{$password} -h{$hostname}";
 
             $ignores = collect(config('syncer.excluded', []))->map(function (string $table) use ($database) {
                 return '--ignore-table=' . $database . '.' . $table;
@@ -122,7 +124,9 @@ class DbSync extends Command
 
     private function resetPasswords()
     {
-        $password = app()->environment() === 'local' ? 'secret123' : config('syncer.develop_password', 'secret123');
+        $password = app()->environment() === 'local' ? 'secret123' : config('syncer.develop_password', Str::random(8));
+
+        $this->info(" - Resetted all accounts to {$password}");
 
         if (Schema::hasColumn('accounts', 'password')) {
             DB::table('accounts')->update(['password' => bcrypt($password),]);
@@ -148,6 +152,10 @@ class DbSync extends Command
             sleep(1);
 
             $progressBar->advance();
+        }
+
+        if (!$process->isSuccessful()) {
+            throw new ProcessFailedException($process);
         }
 
         $progressBar->finish();
