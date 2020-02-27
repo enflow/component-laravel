@@ -30,6 +30,11 @@ class DbSync extends Command
         $password = config('syncer.password') ?? $this->secret('Syncer password?');
         $database = config('syncer.databases') ? $this->choice('Which database do you want to import?', config('syncer.databases')) : $username;
 
+        if (empty($hostname) || empty($username) || empty($password) || empty($database)) {
+            $this->error('All syncer variables are required.');
+            return;
+        }
+
         if (app()->environment() == 'production') {
             $this->error('Cannot run in production');
             return;
