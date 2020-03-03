@@ -169,7 +169,7 @@ class LaravelServiceProvider extends ServiceProvider
         });
 
         config([
-            'session.driver' => 'memcached',
+            'session.driver' => 'cookie', // Memcached didn't work icm with the cache layer
             'session.encrypt' => true,
             'cache.prefix' => Str::slug(config('app.name')) . sha1(config('app.uuid', config('app.key'))),
             'cache.default' => 'cluster',
