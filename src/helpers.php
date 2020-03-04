@@ -17,7 +17,6 @@ if (!function_exists('localize')) {
 
         app()->setLocale($locale);
         Carbon::setLocale($locale);
-        Date::setLocale($locale);
         setlocale(LC_TIME, $locale . '_' . ($locale == 'en' ? 'US' : strtoupper($locale)) . '.utf-8');
     }
 }
