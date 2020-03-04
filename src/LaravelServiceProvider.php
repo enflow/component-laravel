@@ -101,7 +101,6 @@ class LaravelServiceProvider extends ServiceProvider
         }
 
         $this->app->register(\Clockwork\Support\Laravel\ClockworkServiceProvider::class);
-        $this->app->register(\Jenssegers\Date\DateServiceProvider::class);
         $this->app->register(\Spatie\LaravelBlink\BlinkServiceProvider::class);
 
         $this->mailSettings();
