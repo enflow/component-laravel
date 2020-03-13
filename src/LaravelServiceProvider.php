@@ -148,6 +148,11 @@ class LaravelServiceProvider extends ServiceProvider
     {
         // @TODO: move caching to Redis based caching and sessions in memcached, so no hacky "cluster stores" for flush management have be created.
 
+        config([
+            'session.driver' => 'cookie', // Memcached didn't work icm with the cache layer
+            'session.encrypt' => false, // Cookies are already encrypted in EncryptCookies, and otherwise this still happen double which results in cookies that are too big.
+        ]);
+
         if (app()->environment() == 'local' || !preg_match('/clu[0-9].enflow.nl/', gethostname())) {
             return;
         }
@@ -168,8 +173,6 @@ class LaravelServiceProvider extends ServiceProvider
         });
 
         config([
-            'session.driver' => 'cookie', // Memcached didn't work icm with the cache layer
-            'session.encrypt' => true,
             'cache.prefix' => Str::slug(config('app.name')) . sha1(config('app.uuid', config('app.key'))),
             'cache.default' => 'cluster',
             'cache.stores.cluster' => [
