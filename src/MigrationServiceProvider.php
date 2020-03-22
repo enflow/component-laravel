@@ -11,7 +11,7 @@ class MigrationServiceProvider extends ServiceProvider implements DeferrableProv
     public function register()
     {
         $this->app->extend('migration.creator', function ($migrator, $app) {
-            return new Migrations\MigrationCreator($app['files']);
+            return new \Illuminate\Database\Migrations\MigrationCreator($app['files'], __DIR__.'/stubs');
         });
 
         $this->app->extend('migrator', function ($migrator, $app) {
