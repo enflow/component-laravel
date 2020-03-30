@@ -148,38 +148,39 @@ class LaravelServiceProvider extends ServiceProvider
     {
         // @TODO: move caching to Redis based caching and sessions in memcached, so no hacky "cluster stores" for flush management have be created.
 
-        if (!in_array(config('session.driver'), ['cookie', 'database'])) {
+        $onCluster = preg_match('/clu[0-9].enflow.nl/', gethostname());
+
+        if (($onCluster || app()->environment() == 'local') && !in_array(config('session.driver'), ['cookie', 'database'])) {
+            // We don't want to enable cookie sessions on non-cluster machines, but do want it locally
             config([
                 'session.driver' => 'cookie', // Memcached didn't work icm with the cache layer
                 'session.encrypt' => false, // Cookies are already encrypted in EncryptCookies, and otherwise this still happen double which results in cookies that are too big.
             ]);
         }
 
-        if (app()->environment() == 'local' || !preg_match('/clu[0-9].enflow.nl/', gethostname())) {
-            return;
+        if ($onCluster) {
+            Cache::extend('cluster', function ($app, $config) {
+                $config = config('cache.stores.memcached');
+
+                $prefix = $this->getPrefix($config);
+
+                $memcached = $this->app['memcached.connector']->connect(
+                    $config['servers'],
+                    $config['persistent_id'] ?? null,
+                    $config['options'] ?? [],
+                    array_filter($config['sasl'] ?? [])
+                );
+
+                return $this->repository(new ClusterStore($memcached, $prefix));
+            });
+
+            config([
+                'cache.prefix' => Str::slug(config('app.name')) . sha1(config('app.uuid', config('app.key'))),
+                'cache.default' => 'cluster',
+                'cache.stores.cluster' => [
+                    'driver' => 'cluster',
+                ],
+            ]);
         }
-
-        Cache::extend('cluster', function ($app, $config) {
-            $config = config('cache.stores.memcached');
-
-            $prefix = $this->getPrefix($config);
-
-            $memcached = $this->app['memcached.connector']->connect(
-                $config['servers'],
-                $config['persistent_id'] ?? null,
-                $config['options'] ?? [],
-                array_filter($config['sasl'] ?? [])
-            );
-
-            return $this->repository(new ClusterStore($memcached, $prefix));
-        });
-
-        config([
-            'cache.prefix' => Str::slug(config('app.name')) . sha1(config('app.uuid', config('app.key'))),
-            'cache.default' => 'cluster',
-            'cache.stores.cluster' => [
-                'driver' => 'cluster',
-            ],
-        ]);
     }
 }
