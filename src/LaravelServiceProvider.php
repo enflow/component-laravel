@@ -150,8 +150,8 @@ class LaravelServiceProvider extends ServiceProvider
 
         $onCluster = preg_match('/clu[0-9].enflow.nl/', gethostname());
 
-        if (($onCluster || app()->environment() == 'local') && !in_array(config('session.driver'), ['cookie', 'database'])) {
-            // We don't want to enable cookie sessions on non-cluster machines, but do want it locally
+        if (($onCluster || app()->environment() == 'local' || app()->environment() == 'testing') && !in_array(config('session.driver'), ['cookie', 'database'])) {
+            // We don't want to enable cookie sessions on non-cluster machines, but do want it locally & while testing
             config([
                 'session.driver' => 'cookie', // Memcached didn't work icm with the cache layer
                 'session.encrypt' => false, // Cookies are already encrypted in EncryptCookies, and otherwise this still happen double which results in cookies that are too big.
