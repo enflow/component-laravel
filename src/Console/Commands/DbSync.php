@@ -68,7 +68,7 @@ class DbSync extends Command
 
                 $tmpFile = tempnam(sys_get_temp_dir(), "db_sync_");
 
-                $process = new Process($command . " {$tmpFile}");
+                $process = new Process([$command . " {$tmpFile}"]);
                 $process->setTimeout(300);
                 $this->timeProcess($process);
 
