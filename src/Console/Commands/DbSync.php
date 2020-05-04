@@ -68,7 +68,7 @@ class DbSync extends Command
 
                 $tmpFile = tempnam(sys_get_temp_dir(), "db_sync_");
 
-                $process = new Process($command . " {$tmpFile}");
+                $process = Process::fromShellCommandline($command . " {$tmpFile}");
                 $process->setTimeout(300);
                 $this->timeProcess($process);
 
@@ -121,7 +121,7 @@ class DbSync extends Command
         file_put_contents('/tmp/mysql-import-after', 'COMMIT; SET unique_checks=1; SET foreign_key_checks=1;');
 
         foreach ($files as $file) {
-            $process = new Process("cat /tmp/mysql-import-before {$file} /tmp/mysql-import-after | mysql -u{$username} -p{$password} -h{$host} {$database}");
+            $process = Process::fromShellCommandline("cat /tmp/mysql-import-before {$file} /tmp/mysql-import-after | mysql -u{$username} -p{$password} -h{$host} {$database}");
             $process->setTimeout(600);
             $this->timeProcess($process);
         }
