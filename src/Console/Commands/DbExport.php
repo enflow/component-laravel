@@ -2,12 +2,16 @@
 
 namespace Enflow\Component\Laravel\Console\Commands;
 
+use Enflow\Component\Laravel\Console\Domains\Commands\CommandHelpers;
 use Enflow\Component\Laravel\Events\DatabaseExported;
 use Illuminate\Console\Command;
+use Symfony\Component\Process\Process;
 
 class DbExport extends Command
 {
-    protected $signature = 'db:export';
+    use CommandHelpers;
+
+    protected $signature = 'db:export {file?}';
 
     protected $description = 'Export database to local file';
 
@@ -23,35 +27,24 @@ class DbExport extends Command
             return;
         }
 
-        // mysqdump --column-statistics=0 --ssl-mode=REQUIRED --opt --single-transaction --extended-insert --skip-lock-tables --quick --routines --skip-add-locks -uroot -psecret -h127.0.0.1 injectables_booking > db.sql
-        try {
-            $columnStatistics = version_compare($this->mysqlVersion(), '8.0', '>=') ? '--column-statistics=0' : null;
-            $flags = "{$columnStatistics} --ssl-mode=REQUIRED --opt --single-transaction --extended-insert --skip-lock-tables --quick --routines --skip-add-locks";
-            $auth = "-u{$username} -p{$password} -h{$hostname} {$database}";
-            $ignores = collect(config('database.excluded', []))->map(function (string $table) use ($database) {
-                return '--ignore-table=' . $database . '.' . $table;
-            })->implode(' ');
-            $file = 'db.sql';
-            $this->info('Exporting ' . $database);
+        $columnStatistics = version_compare($this->mysqlVersion(), '8.0', '>=') ? '--column-statistics=0' : null;
+        $flags = "{$columnStatistics} --ssl-mode=REQUIRED --opt --single-transaction --extended-insert --skip-lock-tables --quick --routines --skip-add-locks";
+        $auth = "-u{$username} -p{$password} -h{$hostname} {$database}";
+        $ignores = collect(config('database.excluded', []))->map(function (string $table) use ($database) {
+            return '--ignore-table=' . $database . '.' . $table;
+        })->implode(' ');
+        $file = $this->argument('file') ?? 'db.sql';
+        $this->info('Exporting ' . $database);
 
-            $command = "mysqldump {$flags} {$auth} > $file";
+        $command = "mysqldump {$flags} {$auth} > $file";
 
-//            $process = new Process([$command]); // Exit Code: 127(Command not found)
-//            $process->setTimeout(300);
-//            $this->timeProcess($process);
-            shell_exec($command);
+        $process = Process::fromShellCommandline($command);
+        $process->setTimeout(5);
+        $this->timeProcess($process);
 
-            $this->info('Exported to ' . $file);
-            event(new DatabaseExported());
-        } finally {
-            $this->info('Done!');
-        }
-    }
+        $this->info('Exported to ' . $file);
+        event(new DatabaseExported());
 
-    private function mysqlVersion()
-    {
-        $output = shell_exec('mysql -V');
-        preg_match('@[0-9]+\.[0-9]+\.[0-9]+@', $output, $version);
-        return $version[0];
+        $this->info('Done!');
     }
 }
