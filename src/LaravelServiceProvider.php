@@ -62,6 +62,8 @@ class LaravelServiceProvider extends ServiceProvider
 
         $this->commands([
             Console\Commands\DbSync::class,
+            Console\Commands\DbImport::class,
+            Console\Commands\DbExport::class,
             Console\Commands\ResetCredentials::class,
         ]);
 

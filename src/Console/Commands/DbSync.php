@@ -4,16 +4,16 @@ namespace Enflow\Component\Laravel\Console\Commands;
 
 use Enflow\Component\Laravel\Events\DatabaseSynced;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Symfony\Component\Console\Helper\ProgressBar;
-use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
-use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class DbSync extends Command
 {
+    use CommandHelpers;
+
     protected $signature = 'db:sync';
 
     protected $description = 'Sync the database with a remote DB server';
@@ -40,7 +40,7 @@ class DbSync extends Command
             return;
         }
 
-        if (!in_array(gethostbyname(config('database.connections.mysql.host')), ['127.0.0.1', 'localhost'])){
+        if (!in_array(gethostbyname(config('database.connections.mysql.host')), ['127.0.0.1', 'localhost'])) {
             $this->error('Can only sync to local');
             return;
         }
@@ -112,18 +112,8 @@ class DbSync extends Command
 
     private function importingSqlFiles($files)
     {
-        $host = config('database.connections.mysql.host');
-        $username = config('database.connections.mysql.username');
-        $password = config('database.connections.mysql.password');
-        $database = config('database.connections.mysql.database');
-
-        file_put_contents('/tmp/mysql-import-before', 'SET autocommit=0;SET unique_checks=0;SET foreign_key_checks=0;');
-        file_put_contents('/tmp/mysql-import-after', 'COMMIT; SET unique_checks=1; SET foreign_key_checks=1;');
-
         foreach ($files as $file) {
-            $process = Process::fromShellCommandline("cat /tmp/mysql-import-before {$file} /tmp/mysql-import-after | mysql -u{$username} -p{$password} -h{$host} {$database}");
-            $process->setTimeout(600);
-            $this->timeProcess($process);
+            Artisan::call('db:import', ['file' => $file, '--force' => false]);
         }
     }
 
@@ -140,38 +130,5 @@ class DbSync extends Command
         if (Schema::hasColumn('users', 'password')) {
             DB::table('users')->update(['password' => bcrypt($password),]);
         }
-    }
-
-    private function timeProcess(Process $process)
-    {
-        $process->start();
-
-        ProgressBar::setPlaceholderFormatterDefinition('elapsed_seconds', function (ProgressBar $bar, OutputInterface $output) {
-            return (time() - $bar->getStartTime()) . ' secs';
-        });
-
-        $progressBar = new ProgressBar($this->output, $process->getTimeout());
-        $progressBar->setFormat(' %elapsed_seconds%/%estimated%');
-
-        while ($process->isRunning()) {
-            sleep(1);
-
-            $progressBar->advance();
-        }
-
-        if (!$process->isSuccessful()) {
-            throw new ProcessFailedException($process);
-        }
-
-        $progressBar->finish();
-
-        $this->info('');
-    }
-
-    private function mysqlVersion()
-    {
-        $output = shell_exec('mysql -V');
-        preg_match('@[0-9]+\.[0-9]+\.[0-9]+@', $output, $version);
-        return $version[0];
     }
 }
