@@ -113,13 +113,14 @@ class DbSync extends Command
     private function importingSqlFiles($files)
     {
         foreach ($files as $file) {
-            Artisan::call('db:import', ['file' => $file, '--force' => false]);
+            Artisan::call('db:import', ['file' => $file, '--force' => true]);
         }
     }
 
     private function resetPasswords()
     {
-        $password = app()->environment() === 'local' ? 'secret123' : config('syncer.develop_password', Str::random(8));
+        $password = app()->environment() === 'local' ?
+            'secret123' : config('syncer.develop_password', Str::random(8));
 
         $this->info(" - Resetted all accounts to {$password}");
 

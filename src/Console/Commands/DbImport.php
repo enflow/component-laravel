@@ -17,12 +17,13 @@ class DbImport extends Command
 
     public function handle()
     {
-        $database = config('database.connections.mysql');
-        if (!$this->option('force') && !$this->confirm("Are you sure you want to import into {$database['database']}, you might lose data")) {
+        $connection = config('database.connections.mysql');
+
+        if (!$this->option('force') && !$this->confirm("Are you sure you want to import into {$connection['database']}? You might lose data.")) {
             return;
         }
 
-        if (count(Arr::only($database, ['host', 'username', 'password', 'database'])) < 4) {
+        if (count(Arr::only($connection, ['host', 'username', 'password', 'database'])) < 4) {
             $this->error('All database variables are required.');
             return;
         }
@@ -33,15 +34,14 @@ class DbImport extends Command
 
         $file = $this->argument('file') ?? $this->ask('Please provide a file name to import from', 'db.sql');
         if (!file_exists($file)) {
-            $this->error("File ({$file}) doesn't exist");
+            $this->error("File '{$file}' doesn't exist.");
+
             return;
         }
-        $this->warn('Starting import ' . $database['database'] . ' from ' . $file);
 
-        file_put_contents('/tmp/mysql-import-before', 'SET autocommit=0;SET unique_checks=0;SET foreign_key_checks=0;');
-        file_put_contents('/tmp/mysql-import-after', 'COMMIT; SET unique_checks=1; SET foreign_key_checks=1;');
+        $this->warn('Starting import: ' . $file . ' -> ' . $connection['database']);
 
-        $process = Process::fromShellCommandline($this->buildCommand($database, $file));
+        $process = Process::fromShellCommandline($this->buildCommand($connection, $file));
         $process->setTimeout(5);
         $this->timeProcess($process);
 
@@ -50,12 +50,16 @@ class DbImport extends Command
         if (app()->environment() !== 'local') {
             $this->call('up');
         }
-        $this->info('Imported');
+
+        $this->info("Imported {$file}");
     }
 
-    private function buildCommand(array $database, string $file)
+    private function buildCommand(array $connection, string $file)
     {
-        $auth = "-u{$database['username']} -p{$database['password']} -h{$database['host']} {$database['database']}";
+        $auth = "-u{$connection['username']} -p{$connection['password']} -h{$connection['host']} {$connection['database']}";
+
+        file_put_contents('/tmp/mysql-import-before', 'SET autocommit=0;SET unique_checks=0;SET foreign_key_checks=0;');
+        file_put_contents('/tmp/mysql-import-after', 'COMMIT; SET unique_checks=1; SET foreign_key_checks=1;');
 
         return "cat /tmp/mysql-import-before {$file} /tmp/mysql-import-after | mysql {$auth}";
     }

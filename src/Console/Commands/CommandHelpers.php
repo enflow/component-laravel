@@ -39,6 +39,7 @@ trait CommandHelpers
     {
         $output = shell_exec('mysql -V');
         preg_match('@[0-9]+\.[0-9]+\.[0-9]+@', $output, $version);
-        return $version[0];
+
+        return $version[0] ?? null;
     }
 }
