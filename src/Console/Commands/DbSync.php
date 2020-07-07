@@ -2,7 +2,6 @@
 
 namespace Enflow\Component\Laravel\Console\Commands;
 
-use Enflow\Component\Laravel\Console\Domains\Commands\CommandHelpers;
 use Enflow\Component\Laravel\Events\DatabaseSynced;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
@@ -69,7 +68,7 @@ class DbSync extends Command
 
                 $tmpFile = tempnam(sys_get_temp_dir(), "db_sync_");
 
-                $process = new Process([$command . " {$tmpFile}"]);
+                $process = Process::fromShellCommandline($command . " {$tmpFile}");
                 $process->setTimeout(300);
                 $this->timeProcess($process);
 

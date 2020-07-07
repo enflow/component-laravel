@@ -1,6 +1,6 @@
 <?php
 
-namespace Enflow\Component\Laravel\Console\Domains\Commands;
+namespace Enflow\Component\Laravel\Console\Commands;
 
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -9,7 +9,7 @@ use Symfony\Component\Process\Process;
 
 trait CommandHelpers
 {
-    private function timeProcess(Process $process)
+    protected function timeProcess(Process $process)
     {
         $process->start();
 
@@ -35,7 +35,7 @@ trait CommandHelpers
         $this->info('');
     }
 
-    private function mysqlVersion()
+    protected function mysqlVersion()
     {
         $output = shell_exec('mysql -V');
         preg_match('@[0-9]+\.[0-9]+\.[0-9]+@', $output, $version);
