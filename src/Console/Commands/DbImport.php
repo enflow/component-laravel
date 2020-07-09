@@ -56,7 +56,8 @@ class DbImport extends Command
     private function buildCommand(array $database, string $file)
     {
         $auth = "-u{$database['username']} -p{$database['password']} -h{$database['host']} {$database['database']}";
+        $flags = "--default-character-set=utf8";
 
-        return "cat /tmp/mysql-import-before {$file} /tmp/mysql-import-after | mysql {$auth}";
+        return "mysql {$flags} {$auth} < {$file}";
     }
 }

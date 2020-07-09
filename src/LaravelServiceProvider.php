@@ -2,18 +2,20 @@
 
 namespace Enflow\Component\Laravel;
 
+use Barryvdh\Debugbar\Middleware\DebugbarEnabled;
+use Enflow\Component\Laravel\Cluster\ClusterStore;
 use Enflow\Component\Laravel\Exceptions\MailConfigurationMissingException;
-use Illuminate\Support\Facades\Cache;
+use Enflow\Component\Laravel\Http\Controllers\AdminController;
+use Facade\Ignition\Facades\Flare;
 use Illuminate\Contracts\Debug\ExceptionHandler as IlluminateExceptionHandler;
+use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Foundation\Application;
-use Enflow\Component\Laravel\Cluster\ClusterStore;
 use Illuminate\Support\Str;
 use LogicException;
-use Symfony\Component\Process\Process;
-use Facade\Ignition\Facades\Flare;
 
 class LaravelServiceProvider extends ServiceProvider
 {
@@ -67,6 +69,8 @@ class LaravelServiceProvider extends ServiceProvider
             Console\Commands\ResetCredentials::class,
         ]);
 
+        $this->publishConfig();
+        $this->setRoutes();
         $this->setClusterVariables();
 
         if ($bugsnagApiKey = config('services.bugsnag.api_key')) {
@@ -184,5 +188,18 @@ class LaravelServiceProvider extends ServiceProvider
                 ],
             ]);
         }
+    }
+
+    protected function publishConfig()
+    {
+        $configPath = __DIR__ . '/../config/laravel.php';
+        $this->publishes([$configPath => config_path('laravel.php')], 'config');
+    }
+
+    private function setRoutes()
+    {
+        Route::group(['middleware' => ['web', 'auth']], function () {
+            Route::get('/_admin/{endpoint}', [AdminController::class, 'endpoint'])->name('_admin.endpoint');
+        });
     }
 }
