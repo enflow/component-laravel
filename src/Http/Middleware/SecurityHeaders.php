@@ -28,6 +28,18 @@ class SecurityHeaders
         // Feature policy
         $response->headers->set('Feature-Policy', "accelerometer *; camera *; geolocation *; gyroscope *; microphone *; payment *; magnetometer 'none'; usb 'none'");
 
+        // HSTS (activated per domain)
+        if (file_exists($path = base_path('../hosting.json'))) {
+            $contents = @json_decode(file_get_contents($path));
+
+            if (!empty($contents) && !empty($contents->domain->hsts)) {
+                // HSTS is activated on domain level. We activate it here.
+                // Max age set to 1 year.
+
+                $response->headers->set('Strict-Transport-Security', "max-age=31536000; includeSubdomains; preload");
+            }
+        }
+
         return $response;
     }
 }
