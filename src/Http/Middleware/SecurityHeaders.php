@@ -29,7 +29,7 @@ class SecurityHeaders
         $response->headers->set('Feature-Policy', "accelerometer *; camera *; geolocation *; gyroscope *; microphone *; payment *; magnetometer 'none'; usb 'none'");
 
         // HSTS (activated per domain)
-        if (file_exists($path = base_path('../hosting.json'))) {
+        if (file_exists($path = base_path('../../hosting.json'))) {
             $contents = @json_decode(file_get_contents($path));
 
             if (!empty($contents) && !empty($contents->domain->hsts)) {
