@@ -42,12 +42,9 @@ class LaravelServiceProvider extends ServiceProvider
             config(['trustedproxy.proxies' => '*']);
         }
 
-        // Allow bugsnag & browsersync to be used in Twig
+        // Allow browsersync to be used in Twig
         if (config('twigbridge')) {
             config()->set('twigbridge.extensions.functions', array_merge(config()->get('twigbridge.extensions.functions', []), [
-                'bugsnag_js' => [
-                    'is_safe' => ['html']
-                ],
                 'browsersync' => [
                     'is_safe' => ['html']
                 ],
@@ -69,12 +66,6 @@ class LaravelServiceProvider extends ServiceProvider
 
         $this->setClusterVariables();
 
-        if ($bugsnagApiKey = config('services.bugsnag.api_key')) {
-            $this->app->make('bugsnag')->setAppVersion(cache()->rememberForever('appVersion-' . config('app.name'), function () {
-                return $output = exec("cd {$this->app->basePath()}; git describe --always --tags");
-            }));
-        }
-
         if ($flareApiKey = config('flare.key')) {
             Flare::context('Hostname', gethostname());
         }
@@ -82,10 +73,6 @@ class LaravelServiceProvider extends ServiceProvider
 
     public function register()
     {
-        if ($bugsnagApiKey = config('services.bugsnag.api_key')) {
-            $this->registerBugsnag($bugsnagApiKey);
-        }
-
         if ($flareApiKey = config('flare.key')) {
             // Everything should be configured in the app. We just ensure there that local & testing exceptions aren't sent to Flare
 
@@ -117,33 +104,6 @@ class LaravelServiceProvider extends ServiceProvider
         if (config('mail.from.name') === null) {
             config(['mail.from.name' => config('app.name')]);
         }
-    }
-
-    private function registerBugsnag(string $bugsnagApiKey)
-    {
-        $this->app->register(\Bugsnag\BugsnagLaravel\BugsnagServiceProvider::class);
-
-        config([
-            'bugsnag.api_key' => $bugsnagApiKey,
-            'bugsnag.notify_release_stages' => ['production', 'develop', 'staging'],
-            'bugsnag.auto_capture_sessions' => $this->app->environment(['production', 'develop', 'staging']),
-        ]);
-
-        // https://docs.bugsnag.com/platforms/php/laravel/
-        if (version_compare(Application::VERSION, '5.6', '>=')) {
-            config([
-                'logging.channels.stack.channels' => ['single', 'bugsnag'],
-                'logging.channels.bugsnag.driver' => 'bugsnag',
-            ]);
-        } else {
-            // Deprecated: 5.5 and lower only
-            $this->app->alias('bugsnag.logger', \Illuminate\Contracts\Logging\Log::class);
-            $this->app->alias('bugsnag.logger', \Psr\Log\LoggerInterface::class);
-        }
-
-        $this->commands([
-            \Bugsnag\BugsnagLaravel\Commands\DeployCommand::class,
-        ]);
     }
 
     private function setClusterVariables()

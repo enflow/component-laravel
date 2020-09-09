@@ -23,7 +23,7 @@ if (!function_exists('localize')) {
 
 if (!function_exists('bugsnag_js')) {
     function bugsnag_js() {
-        return new HtmlString(view('component-laravel::bugsnag-js')->render());
+        return new HtmlString('<!-- Bugsnag JS is deprecated. -->');
     }
 }
 
