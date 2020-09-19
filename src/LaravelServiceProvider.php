@@ -5,7 +5,7 @@ namespace Enflow\Component\Laravel;
 use Enflow\Component\Laravel\Exceptions\MailConfigurationMissingException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Contracts\Debug\ExceptionHandler as IlluminateExceptionHandler;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Builder as SchemaBuilder;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Foundation\Application;
@@ -25,7 +25,7 @@ class LaravelServiceProvider extends ServiceProvider
 
         localize(config('app.locale'));
 
-        Schema::defaultStringLength(191);
+        SchemaBuilder::defaultStringLength(191);
 
         view()->addNamespace('component-laravel', __DIR__ . '/../resources');
 
