@@ -15,7 +15,6 @@
         "spatie/laravel-blink": "^1.0",
         "itsgoingd/clockwork": "^4.0",
         "nunomaduro/collision": "^3.0|^4.1|^5.0",
-        "bugsnag/bugsnag-laravel": "^2.0",
         "spatie/once": "~1.0|~2.0"
     },
     "autoload": {

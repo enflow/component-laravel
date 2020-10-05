@@ -21,12 +21,6 @@ if (!function_exists('localize')) {
     }
 }
 
-if (!function_exists('bugsnag_js')) {
-    function bugsnag_js() {
-        return new HtmlString('<!-- Bugsnag JS is deprecated. -->');
-    }
-}
-
 if (!function_exists('browsersync')) {
     function browsersync() {
         return new HtmlString(view('component-laravel::browsersync')->render());
