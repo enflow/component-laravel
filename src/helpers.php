@@ -7,7 +7,7 @@ use Jenssegers\Date\Date;
 if (!function_exists('localize')) {
     function localize(string $locale) {
         if (strlen($locale) !== 2 && strlen($locale) !== 5) {
-            throw new InvalidArgumentException("Localize accepts a locale of exactly 2 or 5 characters");
+            throw new InvalidArgumentException("Localize accepts a locale of exactly 2 or 5 characters, got {$locale}");
         }
 
         $parts = str_replace('_', '-', explode('-', $locale));
