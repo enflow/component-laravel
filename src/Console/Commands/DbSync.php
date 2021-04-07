@@ -14,7 +14,7 @@ class DbSync extends Command
 {
     use CommandHelpers;
 
-    protected $signature = 'db:sync';
+    protected $signature = 'db:sync {--database=}';
 
     protected $description = 'Sync the database with a remote DB server';
 
@@ -28,7 +28,7 @@ class DbSync extends Command
         $hostname = config('syncer.hostname') ?? $this->ask('Syncer hostname?', 'db.clu0.enflow.nl');
         $username = config('syncer.username') ?? $this->ask('Syncer username?');
         $password = config('syncer.password') ?? $this->secret('Syncer password?');
-        $database = config('syncer.databases') ? $this->choice('Which database do you want to import?', config('syncer.databases')) : $username;
+        $database = $this->option('database') ?: (config('syncer.databases') ? $this->choice('Which database do you want to import?', config('syncer.databases')) : $username);
 
         if (empty($hostname) || empty($username) || empty($password) || empty($database)) {
             $this->error('All syncer variables are required.');
