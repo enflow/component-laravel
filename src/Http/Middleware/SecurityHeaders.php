@@ -26,8 +26,11 @@ class SecurityHeaders
         // frame-ancestors 'self'; -> breaks Beamy as the viewer iframes the screens
         $response->headers->set('Content-Security-Policy', "report-uri \"https://enflow.report-uri.com/r/d/csp/reportOnly\"", false);
 
-        // Feature policy
-        $response->headers->set('Feature-Policy', "accelerometer *; camera *; geolocation *; gyroscope *; microphone *; payment *; magnetometer 'none'; usb 'none'");
+        // Disable unused permissions.
+        if (config('laravel.security_headers.permissions_policy', true)) {
+            // Disable common.
+            $response->headers->set('Permissions-Policy', "accelerometer=(), gyroscope=(), magnetometer=(), microphone=(), usb=()");
+        }
 
         // HSTS (activated per domain)
         $hosting = $this->hosting();
