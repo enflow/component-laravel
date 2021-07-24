@@ -20,12 +20,13 @@ class DbSync extends Command
 
     public function handle()
     {
-        // CREATE USER 'local_syncer'@'office.enflow.nl' IDENTIFIED BY 'XXXXXXXXXXXX';
-        // GRANT SELECT, RELOAD, REPLICATION CLIENT, SHOW VIEW, EVENT, TRIGGER ON *.* TO 'local_syncer'@'office.enflow.nl';
+        // CREATE USER 'syncer'@'%' IDENTIFIED BY 'XXXXXXXXXXXX';
+        // GRANT SELECT, RELOAD, REPLICATION CLIENT, SHOW VIEW, EVENT, TRIGGER ON *.* TO 'syncer'@'%';
         // FLUSH PRIVILEGES;
         // Add to Forge network tab as well
 
         $hostname = config('syncer.hostname') ?? $this->ask('Syncer hostname?', 'db.clu0.enflow.nl');
+        $port = config('syncer.port') ?? 3306;
         $username = config('syncer.username') ?? $this->ask('Syncer username?');
         $password = config('syncer.password') ?? $this->secret('Syncer password?');
         $database = $this->option('database') ?: (config('syncer.databases') ? $this->choice('Which database do you want to import?', config('syncer.databases')) : $username);
@@ -53,7 +54,7 @@ class DbSync extends Command
             $this->info('Exporting ' . $database);
 
             $columnStatistics = version_compare($this->mysqlVersion(), '8.0', '>=') ? '--column-statistics=0' : null;
-            $flags = "{$columnStatistics} --ssl-mode=REQUIRED --opt --single-transaction --extended-insert --skip-add-locks --skip-lock-tables --quick --routines -u{$username} -p{$password} -h{$hostname}";
+            $flags = "{$columnStatistics} --ssl-mode=REQUIRED --opt --single-transaction --extended-insert --skip-add-locks --skip-lock-tables --no-tablespaces --quick --routines -u{$username} -p{$password} -h{$hostname} --port={$port}";
 
             $ignores = collect(config('syncer.excluded', []))->map(function (string $table) use ($database) {
                 return '--ignore-table=' . $database . '.' . $table;
