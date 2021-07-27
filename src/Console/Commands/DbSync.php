@@ -54,7 +54,7 @@ class DbSync extends Command
             $this->info('Exporting ' . $database);
 
             $columnStatistics = version_compare($this->mysqlVersion(), '8.0', '>=') ? '--column-statistics=0' : null;
-            $flags = "{$columnStatistics} --ssl-mode=REQUIRED --opt --single-transaction --extended-insert --skip-add-locks --skip-lock-tables --no-tablespaces --quick --routines -u{$username} -p{$password} -h{$hostname} --port={$port}";
+            $flags = "{$columnStatistics} --ssl-mode=REQUIRED --opt --single-transaction --extended-insert --skip-add-locks --skip-lock-tables --no-tablespaces --quick -u{$username} -p{$password} -h{$hostname} --port={$port}";
 
             $ignores = collect(config('syncer.excluded', []))->map(function (string $table) use ($database) {
                 return '--ignore-table=' . $database . '.' . $table;
