@@ -5,7 +5,8 @@ use Illuminate\Support\HtmlString;
 use Jenssegers\Date\Date;
 
 if (!function_exists('localize')) {
-    function localize(string $locale) {
+    function localize(string $locale)
+    {
         if (strlen($locale) !== 2 && strlen($locale) !== 5) {
             throw new InvalidArgumentException("Localize accepts a locale of exactly 2 or 5 characters, got {$locale}");
         }
@@ -21,8 +22,16 @@ if (!function_exists('localize')) {
     }
 }
 
-if (!function_exists('browsersync')) {
+if (!function_exists('browsersync'))
+{
     function browsersync() {
         return new HtmlString(view('component-laravel::browsersync')->render());
+    }
+}
+
+if (! function_exists('git_branch')) {
+    function git_branch()
+    {
+        return trim(implode('/', array_slice(explode('/', file_get_contents(base_path() . '/.git/HEAD')), 2)), "\n");
     }
 }
