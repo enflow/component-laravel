@@ -14,21 +14,16 @@ class DbSync extends Command
 {
     use CommandHelpers;
 
-    protected $signature = 'db:sync {--database=}';
+    protected $signature = 'db:sync {--hostname=} {--port=} {--username=} {--password=} {--database=}';
 
     protected $description = 'Sync the database with a remote DB server';
 
     public function handle()
     {
-        // CREATE USER 'syncer'@'%' IDENTIFIED BY 'XXXXXXXXXXXX';
-        // GRANT SELECT, RELOAD, REPLICATION CLIENT, SHOW VIEW, EVENT, TRIGGER ON *.* TO 'syncer'@'%';
-        // FLUSH PRIVILEGES;
-        // Add to Forge network tab as well
-
-        $hostname = config('syncer.hostname') ?? $this->ask('Syncer hostname?', 'db.clu0.enflow.nl');
-        $port = config('syncer.port') ?? 3306;
-        $username = config('syncer.username') ?? $this->ask('Syncer username?');
-        $password = config('syncer.password') ?? $this->secret('Syncer password?');
+        $hostname = $this->option('hostname') ?: (config('syncer.hostname') ?? $this->ask('Syncer hostname?', 'db.clu0.enflow.nl'));
+        $port = $this->option('port') ?: (config('syncer.port') ?? 3306);
+        $username = $this->option('username') ?: (config('syncer.username') ?? $this->ask('Syncer username?'));
+        $password = $this->option('password') ?: (config('syncer.password') ?? $this->secret('Syncer password?'));
         $database = $this->option('database') ?: (config('syncer.databases') ? $this->choice('Which database do you want to import?', config('syncer.databases')) : $username);
 
         if (empty($hostname) || empty($username) || empty($password) || empty($database)) {
@@ -41,7 +36,7 @@ class DbSync extends Command
             return;
         }
 
-        if (!in_array(gethostbyname(config('database.connections.mysql.host')), ['127.0.0.1', 'localhost'])) {
+        if (! in_array(gethostbyname(config('database.connections.mysql.host')), ['127.0.0.1', 'localhost'])) {
             $this->error('Can only sync to local');
             return;
         }
@@ -53,18 +48,17 @@ class DbSync extends Command
         try {
             $this->info('Exporting ' . $database);
 
-            $columnStatistics = version_compare($this->mysqlVersion(), '8.0', '>=') ? '--column-statistics=0' : null;
-            $flags = "{$columnStatistics} --ssl-mode=REQUIRED --opt --single-transaction --extended-insert --skip-add-locks --skip-lock-tables --no-tablespaces --quick -u{$username} -p{$password} -h{$hostname} --port={$port}";
+            $columnStatistics = ''; // version_compare($this->mysqlVersion(), '8.0', '>=') ? '--column-statistics=0' : null;
+            $flags = "{$columnStatistics} --opt --single-transaction --extended-insert --skip-add-locks --skip-lock-tables --no-tablespaces --quick -u{$username} -p{$password} -h{$hostname} --port={$port}";
 
-            $ignores = collect(config('syncer.excluded', []))->map(function (string $table) use ($database) {
-                return '--ignore-table=' . $database . '.' . $table;
-            })->implode(' ');
+            $ignores = collect(config('syncer.excluded', []))->map(fn(string $table) => '--ignore-table=' . $database . '.' . $table)->implode(' ');
 
             $tmpFiles = [];
             foreach ([
                          "structure" => "mysqldump {$flags} --no-data {$database} >",
                          "data" => "mysqldump {$flags} --no-create-info {$ignores} {$database} >>",
                      ] as $name => $command) {
+
                 $this->info("Exporting {$name}");
 
                 $tmpFile = tempnam(sys_get_temp_dir(), "db_sync_");
@@ -80,8 +74,7 @@ class DbSync extends Command
             $this->dropAllTables();
 
             $this->info('Importing SQL');
-            $this->importingSqlFiles($tmpFiles);
-            unlink($tmpFile);
+            $this->importAndDeleteSqlFiles($tmpFiles);
 
             $this->info('Resetting passwords');
             $this->resetPasswords();
@@ -111,10 +104,12 @@ class DbSync extends Command
         Schema::enableForeignKeyConstraints();
     }
 
-    private function importingSqlFiles($files)
+    private function importAndDeleteSqlFiles($files)
     {
         foreach ($files as $file) {
             Artisan::call('db:import', ['file' => $file, '--force' => true]);
+
+            unlink($file);
         }
     }
 
