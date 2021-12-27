@@ -38,6 +38,10 @@ trait CommandHelpers
     protected function mysqlVersion()
     {
         $output = shell_exec('mysql -V');
+        if (stripos($output, 'MariaDB') !== false) {
+            return null;
+        }
+
         preg_match('@[0-9]+\.[0-9]+\.[0-9]+@', $output, $version);
 
         return $version[0] ?? null;

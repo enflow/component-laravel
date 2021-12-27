@@ -107,6 +107,7 @@ class LaravelServiceProvider extends ServiceProvider
         }
     }
 
+    /** @deprecated */
     private function setClusterVariables()
     {
         // @TODO: move caching to Redis based caching and sessions in memcached, so no hacky "cluster stores" for flush management have be created.
