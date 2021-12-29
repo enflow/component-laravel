@@ -29,8 +29,7 @@ class SecurityHeaders
         // Disable unused permissions.
         if (config('laravel.security_headers.permissions_policy', true)) {
             // Disable common.
-            // Disable FLoC (see https://www.eff.org/nl/deeplinks/2021/03/googles-floc-terrible-idea)
-            $response->headers->set('Permissions-Policy', "accelerometer=(), gyroscope=(), magnetometer=(), microphone=(), usb=(), interest-cohort=()");
+            $response->headers->set('Permissions-Policy', "accelerometer=(), gyroscope=(), magnetometer=(), microphone=(), usb=()");
         }
 
         // HSTS (activated per domain)
