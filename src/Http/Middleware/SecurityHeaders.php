@@ -14,22 +14,30 @@ class SecurityHeaders
         /** @var Response $response */
         $response = $next($request);
 
+        // Frame options (deprecated, use content security policy instead.
+        if ($frameOptions = config('laravel.security_headers.frame_options', 'SAMEORIGIN')) {
+            $response->headers->set('X-Frame-Options', $frameOptions, false);
+        }
+
         // Referrer Policy is a new header that allows a site to control how much information the browser includes with navigations away from a document and should be set by all sites.
-        if ($request->isSecure()) {
-            $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
+        if ($request->isSecure() && ($referrerPolicy = config('laravel.security_headers.referrer_policy', 'strict-origin-when-cross-origin'))) {
+            $response->headers->set('Referrer-Policy', $referrerPolicy, false);
         }
 
         // Expect-CT allows a site to determine if they are ready for the upcoming Chrome requirements and/or enforce their CT policy.
-        $response->headers->set('Expect-CT', 'max-age=0, report-uri="https://enflow.report-uri.com/r/d/ct/reportOnly"');
+        if ($expectCt = config('laravel.security_headers.expect_ct', 'max-age=0, report-uri="https://enflow.report-uri.com/r/d/ct/reportOnly"')) {
+            $response->headers->set('Expect-CT', $expectCt, false);
+        }
 
         // Preventing Clickjacking
         // frame-ancestors 'self'; -> breaks Beamy as the viewer iframes the screens
-        $response->headers->set('Content-Security-Policy', "report-uri \"https://enflow.report-uri.com/r/d/csp/reportOnly\"", false);
+        if ($contentSecurityPolicy = config('laravel.security_headers.content_security_policy', "report-uri \"https://enflow.report-uri.com/r/d/csp/reportOnly\"")) {
+            $response->headers->set('Content-Security-Policy', $contentSecurityPolicy, false);
+        }
 
         // Disable unused permissions.
-        if (config('laravel.security_headers.permissions_policy', true)) {
-            // Disable common.
-            $response->headers->set('Permissions-Policy', "accelerometer=(), gyroscope=(), magnetometer=(), microphone=(), usb=()");
+        if ($permissionPolicy = config('laravel.security_headers.permissions_policy', "accelerometer=(), gyroscope=(), magnetometer=(), microphone=(), usb=()")) {
+            $response->headers->set('Permissions-Policy', $permissionPolicy, false);
         }
 
         // HSTS (activated per domain)
