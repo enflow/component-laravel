@@ -2,7 +2,9 @@
 
 namespace Enflow\Component\Laravel;
 
+use Enflow\Component\Laravel\Console\Commands\SessionGarbageCollector;
 use Enflow\Component\Laravel\Exceptions\MailConfigurationMissingException;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Contracts\Debug\ExceptionHandler as IlluminateExceptionHandler;
 use Illuminate\Database\Schema\Builder as SchemaBuilder;
@@ -33,16 +35,13 @@ class LaravelServiceProvider extends ServiceProvider
             throw new LogicException("Unable to setup custom error template. Please extend the '\\Enflow\\Component\\Laravel\\AbstractExceptionHandler' class in your '\\App\\Exceptions\\Handler' file.");
         }
 
-        if (config('queue.default') === 'beanstalkd' && config('queue.connections.beanstalkd.queue') === 'default') {
-            throw new LogicException("Unable to setup queue, beanstalkd is listing to 'default' queue which conflicts with other application. Please ensure that the correct queue is set. Prefered format: 'applicationname_env'. Example: 'mijnenflow_production'");
-        }
-
         if ($this->app->environment() === 'local') {
             // Allow ngrok
             config(['trustedproxy.proxies' => '*']);
         }
 
         // Allow browsersync to be used in Twig
+        // @TODO: move to Tower.
         if (config('twigbridge')) {
             config()->set('twigbridge.extensions.functions', array_merge(config()->get('twigbridge.extensions.functions', []), [
                 'browsersync' => [
@@ -63,16 +62,19 @@ class LaravelServiceProvider extends ServiceProvider
             Console\Commands\DbExport::class,
             Console\Commands\DbCreate::class,
             Console\Commands\ResetCredentials::class,
+            Console\Commands\SessionGarbageCollector::class,
         ]);
 
-        if ($flareApiKey = config('flare.key')) {
+        if (config('flare.key')) {
             Flare::context('Hostname', gethostname());
         }
+
+        $this->setupSessionGarbageCollector();
     }
 
     public function register()
     {
-        if ($flareApiKey = config('flare.key')) {
+        if (config('flare.key')) {
             // Everything should be configured in the app. We just ensure there that local & testing exceptions aren't sent to Flare
 
             if ($this->app->environment('local', 'testing')) {
@@ -88,9 +90,6 @@ class LaravelServiceProvider extends ServiceProvider
             request()->headers->set('host', $_SERVER['HTTP_X_ORIGINAL_HOST']);
         }
 
-        $this->app->register(\Clockwork\Support\Laravel\ClockworkServiceProvider::class);
-        $this->app->register(\Spatie\LaravelBlink\BlinkServiceProvider::class);
-
         $this->mailSettings();
     }
 
@@ -102,6 +101,22 @@ class LaravelServiceProvider extends ServiceProvider
 
         if (config('mail.from.name') === null) {
             config(['mail.from.name' => config('app.name')]);
+        }
+    }
+
+    private function setupSessionGarbageCollector()
+    {
+        // Session garbage collection in background
+        // Issue is that 2% of requests have a long request time due to garbage collection. This should be run in the background.
+        if (config('session.driver') === 'file' && !app()->environment('local', 'testing')) {
+            $this->app->booted(function () {
+                $schedule = $this->app->make(Schedule::class);
+                $schedule->command(SessionGarbageCollector::class)->hourly();
+            });
+
+            config([
+                'session.lottery' => [0, 1],
+            ]);
         }
     }
 }
