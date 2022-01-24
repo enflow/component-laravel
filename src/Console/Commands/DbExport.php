@@ -27,9 +27,9 @@ class DbExport extends Command
 
         $this->warn('Starting export ' . $connection['database']);
 
-        $process = Process::fromShellCommandline($this->buildCommand($connection, $file));
-        $process->setTimeout(5);
-        $this->timeProcess($process);
+        $this->timeProcess(
+            Process::fromShellCommandline($this->buildCommand($connection, $file))->setTimeout(5)
+        );
 
         event(new DatabaseExported());
 

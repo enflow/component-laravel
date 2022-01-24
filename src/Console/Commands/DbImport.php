@@ -19,7 +19,7 @@ class DbImport extends Command
     {
         $connection = config('database.connections.mysql');
 
-        if (!$this->option('force') && !$this->confirm("Are you sure you want to import into {$connection['database']}? You might lose data.")) {
+        if (! $this->option('force') && ! $this->confirm("Are you sure you want to import into {$connection['database']}? You might lose data.")) {
             return;
         }
 
@@ -33,7 +33,7 @@ class DbImport extends Command
         }
 
         $file = $this->argument('file') ?? $this->ask('Please provide a file name to import from', 'db.sql');
-        if (!file_exists($file)) {
+        if (! file_exists($file)) {
             $this->error("File '{$file}' doesn't exist.");
 
             return;
@@ -41,9 +41,9 @@ class DbImport extends Command
 
         $this->warn('Starting import: ' . $file . ' -> ' . $connection['database']);
 
-        $process = Process::fromShellCommandline($this->buildCommand($connection, $file));
-        $process->setTimeout(5);
-        $this->timeProcess($process);
+        $this->timeProcess(
+            Process::fromShellCommandline($this->buildCommand($connection, $file))->setTimeout(5)
+        );
 
         event(new DatabaseImported());
 

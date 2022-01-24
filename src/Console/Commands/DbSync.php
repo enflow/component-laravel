@@ -53,19 +53,20 @@ class DbSync extends Command
 
             $ignores = collect(config('syncer.excluded', []))->map(fn(string $table) => '--ignore-table=' . $database . '.' . $table)->implode(' ');
 
-            $tmpFiles = [];
-            foreach ([
-                         "structure" => "mysqldump {$flags} --no-data {$database} >",
-                         "data" => "mysqldump {$flags} --no-create-info {$ignores} {$database} >>",
-                     ] as $name => $command) {
+            $commands = [
+                "structure" => "mysqldump {$flags} --no-data {$database} >",
+                "data" => "mysqldump {$flags} --no-create-info {$ignores} {$database} >>",
+            ];
 
+            $tmpFiles = [];
+            foreach ($commands as $name => $command) {
                 $this->info("Exporting {$name}");
 
                 $tmpFile = tempnam(sys_get_temp_dir(), "db_sync_");
 
-                $process = Process::fromShellCommandline($command . " {$tmpFile}");
-                $process->setTimeout(300);
-                $this->timeProcess($process);
+                $this->timeProcess(
+                    Process::fromShellCommandline($command . " {$tmpFile}")->setTimeout(300)
+                );
 
                 $tmpFiles[] = $tmpFile;
             }
@@ -76,11 +77,14 @@ class DbSync extends Command
             $this->info('Importing SQL');
             $this->importAndDeleteSqlFiles($tmpFiles);
 
+            $this->info('Optimizing database');
+            $this->call('db:optimize', ['--force' => true]);
+
             $this->info('Resetting passwords');
             $this->resetPasswords();
 
             $this->info("Running migrations");
-            $this->call('migrate', ['--force' => '']);
+            $this->call('migrate', ['--force' => true]);
 
             $this->info("Clearing cache");
             $this->call('cache:clear');
@@ -107,7 +111,10 @@ class DbSync extends Command
     private function importAndDeleteSqlFiles($files)
     {
         foreach ($files as $file) {
-            Artisan::call('db:import', ['file' => $file, '--force' => true]);
+            $this->call('db:import', [
+                'file' => $file,
+                '--force' => true,
+            ]);
 
             unlink($file);
         }
@@ -116,7 +123,7 @@ class DbSync extends Command
     private function resetPasswords()
     {
         $password = app()->environment() === 'local' ?
-            'secret123' : config('syncer.develop_password', Str::random(8));
+            'secret123' : config('syncer.develop_password', Str::random(16));
 
         $this->info(" - Resetted all accounts to {$password}");
 

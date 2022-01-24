@@ -61,6 +61,7 @@ class LaravelServiceProvider extends ServiceProvider
             Console\Commands\DbImport::class,
             Console\Commands\DbExport::class,
             Console\Commands\DbCreate::class,
+            Console\Commands\DbOptimize::class,
             Console\Commands\ResetCredentials::class,
             Console\Commands\SessionGarbageCollector::class,
         ]);
