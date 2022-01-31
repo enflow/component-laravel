@@ -21,6 +21,10 @@ class LaravelServiceProvider extends ServiceProvider
 {
     public function boot()
     {
+        $this->mergeConfigFrom(
+            __DIR__.'/../config/laravel.php', 'laravel'
+        );
+
         if ($this->app->bound('twig') && $twig = $this->app->resolved('twig')) {
             $twig->getExtension('core')->setTimezone('Europe/Amsterdam');
         }
