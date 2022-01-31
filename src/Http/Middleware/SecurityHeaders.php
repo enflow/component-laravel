@@ -41,26 +41,11 @@ class SecurityHeaders
         }
 
         // HSTS (activated per domain)
-        $hosting = $this->hosting();
-        if (!empty($hosting) && !empty($hosting->domain->hsts)) {
+        if (config('laravel.hsts', false)) {
             $response->headers->set('Strict-Transport-Security', "max-age=31536000; includeSubdomains; preload");
         }
 
         return $response;
-    }
-
-    private function hosting()
-    {
-        $hosting = cache()->rememberForever(Str::slug(config('app.name')) . ':hosting.json', function () {
-            if (file_exists($path = base_path('../../hosting.json'))) {
-                return @json_decode(file_get_contents($path));
-            }
-
-            return true;
-        });
-
-        // Cannot save 'false' to caching.
-        return $hosting === true ? null : $hosting;
     }
 }
 

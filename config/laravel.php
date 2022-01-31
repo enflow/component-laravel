@@ -5,5 +5,7 @@ return [
 
     'security_headers' => [
         'permissions_policy' => true,
-    ]
+    ],
+
+    'hsts' => env('HSTS'),
 ];
