@@ -5,24 +5,21 @@ namespace Enflow\Component\Laravel;
 use Enflow\Component\Laravel\Console\Commands\SessionGarbageCollector;
 use Enflow\Component\Laravel\Exceptions\MailConfigurationMissingException;
 use Illuminate\Console\Scheduling\Schedule;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Contracts\Debug\ExceptionHandler as IlluminateExceptionHandler;
 use Illuminate\Database\Schema\Builder as SchemaBuilder;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Foundation\Application;
 use Enflow\Component\Laravel\Cluster\ClusterStore;
-use Illuminate\Support\Str;
 use LogicException;
-use Symfony\Component\Process\Process;
-use Facade\Ignition\Facades\Flare;
+use Facade\Ignition\Facades\Flare as FacadeFlare;
+use Spatie\LaravelIgnition\Facades\Flare as SpatieFlare;
 
 class LaravelServiceProvider extends ServiceProvider
 {
     public function boot()
     {
         $this->mergeConfigFrom(
-            __DIR__.'/../config/laravel.php', 'laravel'
+            __DIR__ . '/../config/laravel.php', 'laravel'
         );
 
         if ($this->app->bound('twig') && $twig = $this->app->resolved('twig')) {
@@ -35,7 +32,7 @@ class LaravelServiceProvider extends ServiceProvider
 
         view()->addNamespace('component-laravel', __DIR__ . '/../resources');
 
-        if (!$this->app->runningInConsole() && !$this->app->make(IlluminateExceptionHandler::class) instanceof AbstractExceptionHandler && !View::exists('errors.500')) {
+        if (! $this->app->runningInConsole() && ! $this->app->make(IlluminateExceptionHandler::class) instanceof AbstractExceptionHandler && ! View::exists('errors.500')) {
             throw new LogicException("Unable to setup custom error template. Please extend the '\\Enflow\\Component\\Laravel\\AbstractExceptionHandler' class in your '\\App\\Exceptions\\Handler' file.");
         }
 
@@ -71,7 +68,11 @@ class LaravelServiceProvider extends ServiceProvider
         ]);
 
         if (config('flare.key')) {
-            Flare::context('Hostname', gethostname());
+            if (class_exists(FacadeFlare::class)) {
+                FacadeFlare::context('Hostname', gethostname());
+            } elseif (class_exists(SpatieFlare::class)) {
+                SpatieFlare::context('Hostname', gethostname());
+            }
         }
 
         $this->setupSessionGarbageCollector();
@@ -100,7 +101,7 @@ class LaravelServiceProvider extends ServiceProvider
 
     private function mailSettings()
     {
-        if (in_array($this->app->environment(), ['testing']) && !in_array(config('mail.driver'), ['log', 'array'])) {
+        if (in_array($this->app->environment(), ['testing']) && ! in_array(config('mail.driver'), ['log', 'array'])) {
             config(['mail.driver' => 'array']);
         }
 
@@ -113,7 +114,7 @@ class LaravelServiceProvider extends ServiceProvider
     {
         // Session garbage collection in background
         // Issue is that 2% of requests have a long request time due to garbage collection. This should be run in the background.
-        if (config('session.driver') === 'file' && !app()->environment('local', 'testing')) {
+        if (config('session.driver') === 'file' && ! app()->environment('local', 'testing')) {
             $this->app->booted(function () {
                 $schedule = $this->app->make(Schedule::class);
                 $schedule->command(SessionGarbageCollector::class)->hourly();
