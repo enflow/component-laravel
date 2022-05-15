@@ -21,7 +21,7 @@ abstract class AbstractExceptionHandler extends Handler
     {
         View::replaceNamespace('errors', [
             resource_path('views/errors'), // The views of the application
-            __DIR__ . '/../resources/errors', // The default component-laravel views
+            base_path('vendor/enflow/error-templates/dist'), // The default component-laravel views
             base_path('vendor/laravel/framework/src/Illuminate/Foundation/Exceptions/views'), // The default Laravel error views
         ]);
     }
