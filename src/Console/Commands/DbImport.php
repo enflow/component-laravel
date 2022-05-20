@@ -11,7 +11,7 @@ class DbImport extends Command
 {
     use CommandHelpers;
 
-    protected $signature = 'db:import {file?} {--force}';
+    protected $signature = 'db:import {file?} {--force} {--skip-maintenance-mode}';
 
     protected $description = 'Import database from local file';
 
@@ -28,7 +28,7 @@ class DbImport extends Command
             return;
         }
 
-        if (app()->environment() !== 'local') {
+        if (! $this->option('skip-maintenance-mode') && app()->environment() !== 'local') {
             $this->call('down');
         }
 
@@ -47,7 +47,7 @@ class DbImport extends Command
 
         event(new DatabaseImported());
 
-        if (app()->environment() !== 'local') {
+        if (! $this->option('skip-maintenance-mode') && app()->environment() !== 'local') {
             $this->call('up');
         }
 
