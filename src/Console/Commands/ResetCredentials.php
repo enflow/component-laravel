@@ -4,6 +4,7 @@ namespace Enflow\Component\Laravel\Console\Commands;
 
 use Enflow\Component\Laravel\Events\DatabaseSynced;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -23,41 +24,42 @@ class ResetCredentials extends Command
             return;
         }
 
-        if (!in_array(gethostbyname(config('database.connections.mysql.host')), ['127.0.0.1', 'localhost'])) {
+        if (! in_array(gethostbyname(config('database.connections.mysql.host')), ['127.0.0.1', 'localhost'])) {
             $this->error('Cannot sync: MySQL host is configured to an external connection.');
 
             return;
         }
 
         $password = $this->option('password') ?? 'secret123';
-        $table = $this->lookupAuthTable();
 
-        if (!Schema::hasColumn($table, 'password')) {
-            $this->error("{$table} doesn't contain a 'password' column");
+        $this->lookupAuthProviders()->each(function (string $table, string $provider) use ($password) {
+            $this->info("Checking for {$table}...");
 
-            return;
-        }
+            if (! Schema::hasColumn($table, 'password')) {
+                $this->error("{$table} doesn't contain a 'password' column");
 
-        if (!$this->confirm("Do you want to reset all credentials to '{$password}' on the '{$table}' table'?")) {
-            return;
-        }
+                return;
+            }
 
-        $query = DB::table($table)->whereNotNull('password');
+            if (! $this->confirm("Resettable! Confirm to reset to '{$password}' on the '{$table}' table' for the '{$provider}' provider?")) {
+                return;
+            }
 
-        $count = (clone $query)->count();
-        (clone $query)->update(['password' => bcrypt($password),]);
+            $query = DB::table($table)->whereNotNull('password');
 
-        $this->info("Updated {$count} records.");
+            $count = (clone $query)->count();
+            (clone $query)->update(['password' => bcrypt($password)]);
 
-        $this->table(['Email', 'Password'], (clone $query)->take(5)->get()->map(function ($item) use ($password) {
-            return [$item->email, $password];
-        }));
+            $this->info($table . ": updated {$count} records.");
+
+            $this->table(['Email', 'Password'], (clone $query)->take(5)->get()->map(fn($item) => [$item->email, $password]));
+        });
     }
 
-    private function lookupAuthTable(): string
+    private function lookupAuthProviders(): Collection
     {
-        $model = config('auth.providers.users.model');
-
-        return (new $model)->getTable();
+        return collect(config('auth.providers'))
+            ->filter(fn($provider) => $provider['driver'] === 'eloquent')
+            ->map(fn($provider) => (new $provider['model'])->getTable());
     }
 }
