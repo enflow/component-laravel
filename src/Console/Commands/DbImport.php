@@ -58,9 +58,9 @@ class DbImport extends Command
     {
         $auth = "-u{$connection['username']} -p{$connection['password']} -h{$connection['host']} {$connection['database']}";
 
-        file_put_contents('/tmp/mysql-import-before', 'SET autocommit=0;SET unique_checks=0;SET foreign_key_checks=0;');
-        file_put_contents('/tmp/mysql-import-after', 'COMMIT; SET unique_checks=1; SET foreign_key_checks=1;');
+        file_put_contents($tmpImportBefore = tempnam(sys_get_temp_dir(), 'before'), 'SET autocommit=0;SET unique_checks=0;SET foreign_key_checks=0;');
+        file_put_contents($tmpAfterBefore = tempnam(sys_get_temp_dir(), 'after'), 'COMMIT; SET unique_checks=1; SET foreign_key_checks=1;');
 
-        return "cat /tmp/mysql-import-before {$file} /tmp/mysql-import-after | mysql {$auth}";
+        return "cat {$tmpImportBefore} {$file} {$tmpAfterBefore} | mysql {$auth}";
     }
 }
