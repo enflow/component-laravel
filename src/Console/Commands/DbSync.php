@@ -20,7 +20,7 @@ class DbSync extends Command
 
     public function handle()
     {
-        $hostname = $this->option('hostname') ?: (config('syncer.hostname') ?? $this->ask('Syncer hostname?', 'db.clu0.enflow.nl'));
+        $hostname = $this->option('hostname') ?: (config('syncer.hostname') ?? $this->ask('Syncer hostname?', 'db.ha0.enflow.network'));
         $port = $this->option('port') ?: (config('syncer.port') ?? 3306);
         $username = $this->option('username') ?: (config('syncer.username') ?? $this->ask('Syncer username?'));
         $password = $this->option('password') ?: (config('syncer.password') ?? $this->secret('Syncer password?'));
