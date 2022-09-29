@@ -2,16 +2,17 @@
 
 namespace Enflow\Component\Laravel;
 
+use Enflow\Component\Laravel\Cluster\ClusterStore;
+use Enflow\Component\Laravel\Console\Commands\MonitorHorizonWorker;
 use Enflow\Component\Laravel\Console\Commands\SessionGarbageCollector;
 use Enflow\Component\Laravel\Exceptions\MailConfigurationMissingException;
+use Facade\Ignition\Facades\Flare as FacadeFlare;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler as IlluminateExceptionHandler;
 use Illuminate\Database\Schema\Builder as SchemaBuilder;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use Enflow\Component\Laravel\Cluster\ClusterStore;
 use LogicException;
-use Facade\Ignition\Facades\Flare as FacadeFlare;
 use Spatie\LaravelIgnition\Facades\Flare as SpatieFlare;
 
 class LaravelServiceProvider extends ServiceProvider
@@ -65,6 +66,7 @@ class LaravelServiceProvider extends ServiceProvider
             Console\Commands\DbOptimize::class,
             Console\Commands\ResetCredentials::class,
             Console\Commands\SessionGarbageCollector::class,
+            Console\Commands\MonitorHorizonWorker::class,
         ]);
 
         if (config('flare.key')) {
@@ -73,6 +75,12 @@ class LaravelServiceProvider extends ServiceProvider
             } elseif (class_exists(SpatieFlare::class)) {
                 SpatieFlare::context('Hostname', gethostname());
             }
+        }
+
+        if (class_exists(\Laravel\Horizon\Horizon::class)) {
+            $this->app->booted(function () {
+                $this->app->make(Schedule::class)->command(MonitorHorizonWorker::class)->everyFifteenMinutes();
+            });
         }
 
         $this->setupSessionGarbageCollector();
@@ -116,8 +124,7 @@ class LaravelServiceProvider extends ServiceProvider
         // Issue is that 2% of requests have a long request time due to garbage collection. This should be run in the background.
         if (config('session.driver') === 'file' && ! app()->environment('local', 'testing')) {
             $this->app->booted(function () {
-                $schedule = $this->app->make(Schedule::class);
-                $schedule->command(SessionGarbageCollector::class)->hourly();
+                $this->app->make(Schedule::class)->command(SessionGarbageCollector::class)->hourly();
             });
 
             config([
