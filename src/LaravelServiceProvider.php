@@ -23,6 +23,8 @@ class LaravelServiceProvider extends ServiceProvider
             __DIR__ . '/../config/laravel.php', 'laravel'
         );
 
+        $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
+
         if ($this->app->bound('twig') && $twig = $this->app->resolved('twig')) {
             $twig->getExtension('core')->setTimezone('Europe/Amsterdam');
         }
