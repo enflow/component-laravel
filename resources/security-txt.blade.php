@@ -1,6 +1,8 @@
 Canonical: {{ url('.well-known/security.txt') }}
 Expires: {{ (now()->month >= 10 ? now()->addMonths(11)->endOfMonth() : now()->endOfYear())->format('c') }}
 
+Encryption: https://enflow.nl/pgp-key.txt
+
 Contact: https://enflow.nl/contact
 Contact: mailto:security@enflow.nl
 Contact: tel:+31172700568
