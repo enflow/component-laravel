@@ -25,9 +25,11 @@ class SecurityHeaders
         }
 
         // Expect-CT allows a site to determine if they are ready for the upcoming Chrome requirements and/or enforce their CT policy.
-        if (($expectCt = config('laravel.security_headers.expect_ct', 'max-age=0, report-uri="https://enflow.report-uri.com/r/d/ct/reportOnly"')) && !$response->headers->has('Expect-CT')) {
-            $response->headers->set('Expect-CT', $expectCt);
-        }
+        // Expect-CT allows a site to determine if they are ready for the upcoming Chrome requirements and/or enforce their CT policy.
+        // Update 29/10/2022: "The Expect-CT header is deprecated and will be removed. Chrome requires Certificate Transparency for all publicly trusted certificates issued after April 30, 2018."
+        // if (($expectCt = config('laravel.security_headers.expect_ct', 'max-age=0, report-uri="https://enflow.report-uri.com/r/d/ct/reportOnly"')) && !$response->headers->has('Expect-CT')) {
+        //     $response->headers->set('Expect-CT', $expectCt);
+        // }
 
         // Preventing Clickjacking
         // frame-ancestors 'self'; -> breaks Beamy as the viewer iframes the screens
