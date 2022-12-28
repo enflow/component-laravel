@@ -114,7 +114,7 @@ class DbSync extends Command
             $this->call('db:import', [
                 'file' => $file,
                 '--force' => true,
-                '--skip-maintenance-mode' => false,
+                '--skip-maintenance-mode' => true,
             ]);
 
             unlink($file);

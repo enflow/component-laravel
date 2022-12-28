@@ -14,7 +14,7 @@ class SecurityHeaders
         /** @var Response $response */
         $response = $next($request);
 
-        // Frame options (deprecated, use content security policy instead.
+        // Frame options (deprecated, use content security policy instead).
         if (($frameOptions = config('laravel.security_headers.frame_options', 'SAMEORIGIN')) && !$response->headers->has('X-Frame-Options')) {
             $response->headers->set('X-Frame-Options', $frameOptions);
         }
