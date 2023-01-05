@@ -97,7 +97,7 @@ class DbSync extends Command
         }
     }
 
-    private function dropAllTables()
+    private function dropAllTables(): void
     {
         Schema::disableForeignKeyConstraints();
 
@@ -108,7 +108,7 @@ class DbSync extends Command
         Schema::enableForeignKeyConstraints();
     }
 
-    private function importAndDeleteSqlFiles($files)
+    private function importAndDeleteSqlFiles($files): void
     {
         foreach ($files as $file) {
             $this->call('db:import', [
@@ -121,19 +121,13 @@ class DbSync extends Command
         }
     }
 
-    private function resetPasswords()
+    private function resetPasswords(): void
     {
-        $password = app()->environment() === 'local' ?
-            'secret123' : config('syncer.develop_password', Str::random(16));
+        $password = app()->environment() === 'local' ? 'secret123' : config('syncer.develop_password', Str::random(16));
 
-        $this->info(" - Resetted all accounts to {$password}");
-
-        if (Schema::hasColumn('accounts', 'password')) {
-            DB::table('accounts')->update(['password' => bcrypt($password),]);
-        }
-
-        if (Schema::hasColumn('users', 'password')) {
-            DB::table('users')->update(['password' => bcrypt($password),]);
-        }
+        $this->call('reset-credentials', [
+            '--password' => $password,
+            '--force' => true,
+        ]);
     }
 }

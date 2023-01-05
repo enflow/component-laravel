@@ -13,7 +13,7 @@ use Symfony\Component\Process\Process;
 
 class ResetCredentials extends Command
 {
-    protected $signature = 'reset-credentials {--password=}';
+    protected $signature = 'reset-credentials {--password=} {--force}';
     protected $description = 'Resets all credentials to a given string for local debugging.';
 
     public function handle()
@@ -41,7 +41,7 @@ class ResetCredentials extends Command
                 return;
             }
 
-            if (! $this->confirm("Resettable! Confirm to reset to '{$password}' on the '{$table}' table' for the '{$provider}' provider?")) {
+            if (! $this->option('force') && ! $this->confirm("Resettable! Confirm to reset to '{$password}' on the '{$table}' table' for the '{$provider}' provider?")) {
                 return;
             }
 
