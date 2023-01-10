@@ -60,6 +60,7 @@ class ResetCredentials extends Command
     {
         return collect(config('auth.providers'))
             ->filter(fn($provider) => $provider['driver'] === 'eloquent')
+            ->filter(fn($provider) => class_exists($provider['model']))
             ->map(fn($provider) => (new $provider['model'])->getTable());
     }
 }
