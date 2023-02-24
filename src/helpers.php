@@ -24,7 +24,8 @@ if (!function_exists('localize')) {
 
 if (!function_exists('browsersync'))
 {
-    function browsersync() {
+    function browsersync()
+    {
         return new HtmlString(view('component-laravel::browsersync')->render());
     }
 }

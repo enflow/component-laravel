@@ -39,11 +39,6 @@ class LaravelServiceProvider extends ServiceProvider
             throw new LogicException("Unable to setup custom error template. Please extend the '\\Enflow\\Component\\Laravel\\AbstractExceptionHandler' class in your '\\App\\Exceptions\\Handler' file.");
         }
 
-        if ($this->app->environment() === 'local') {
-            // Allow ngrok
-            config(['trustedproxy.proxies' => '*']);
-        }
-
         // Allow browsersync to be used in Twig
         // @TODO: move to Tower.
         if (config('twigbridge')) {
@@ -99,11 +94,6 @@ class LaravelServiceProvider extends ServiceProvider
                     'logging.channels.stack.channels' => ['single'],
                 ]);
             }
-        }
-
-        // Ensure the host is set correctly when using ngrok (https://trello.com/c/36euiq0A/285-ngrok-originalhost-handling)
-        if ($this->app->environment() === 'local' && isset($_SERVER['HTTP_X_ORIGINAL_HOST'])) {
-            request()->headers->set('host', $_SERVER['HTTP_X_ORIGINAL_HOST']);
         }
 
         $this->mailSettings();
