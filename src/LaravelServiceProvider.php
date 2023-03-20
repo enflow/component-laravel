@@ -108,6 +108,10 @@ class LaravelServiceProvider extends ServiceProvider
         if (config('mail.from.name') === null) {
             config(['mail.from.name' => config('app.name')]);
         }
+
+        if (! in_array(config('mail.driver'), ['log', 'array']) && (config('mail.from.address') === null || config('mail.from.address') === 'hello@example.com')) {
+            throw new MailConfigurationMissingException('Mail configuration is missing. Please set the "mail.from.address" configuration value.');
+        }
     }
 
     private function setupSessionGarbageCollector()
