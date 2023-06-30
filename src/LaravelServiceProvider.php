@@ -64,6 +64,7 @@ class LaravelServiceProvider extends ServiceProvider
             Console\Commands\ResetCredentials::class,
             Console\Commands\SessionGarbageCollector::class,
             Console\Commands\MonitorHorizonWorker::class,
+            Console\Commands\ValidateHosting::class,
         ]);
 
         if (config('flare.key')) {
@@ -114,7 +115,7 @@ class LaravelServiceProvider extends ServiceProvider
         }
     }
 
-    private function setupSessionGarbageCollector()
+    private function setupSessionGarbageCollector(): void
     {
         // Session garbage collection in background
         // Issue is that 2% of requests have a long request time due to garbage collection. This should be run in the background.
