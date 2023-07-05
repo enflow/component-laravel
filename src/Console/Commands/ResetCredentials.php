@@ -7,6 +7,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
@@ -18,8 +19,14 @@ class ResetCredentials extends Command
 
     public function handle()
     {
-        if (app()->environment() !== 'local') {
-            $this->error("For local usage only.");
+        if (app()->environment() !== 'local' && ! $this->option('force')) {
+            if (app()->environment('production')) {
+                $this->error("For local or development usage only. Cannot be forced.");
+
+                return;
+            }
+
+            $this->error("For local usage only. Use --force to override.");
 
             return;
         }
@@ -30,7 +37,7 @@ class ResetCredentials extends Command
             return;
         }
 
-        $password = $this->option('password') ?? 'secret123';
+        $password = $this->password();
 
         $this->lookupAuthProviders()->each(function (string $table, string $provider) use ($password) {
             $this->info("Checking for {$table}...");
@@ -62,5 +69,18 @@ class ResetCredentials extends Command
             ->filter(fn($provider) => $provider['driver'] === 'eloquent')
             ->filter(fn($provider) => class_exists($provider['model']))
             ->map(fn($provider) => (new $provider['model'])->getTable());
+    }
+
+    private function password(): string
+    {
+        if ($inputtedPassword = $this->option('password')) {
+            return $inputtedPassword;
+        }
+
+        if (app()->environment('local')) {
+            return 'secret123';
+        }
+
+        return Str::random();
     }
 }
