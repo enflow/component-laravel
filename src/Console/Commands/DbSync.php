@@ -36,8 +36,8 @@ class DbSync extends Command
             return;
         }
 
-        $validHosts = config('syncer.valid_hosts', ['127.0.0.1', 'localhost']);
-        if (! in_array(gethostbyname(config('database.connections.mysql.host')), $validHosts) && ! in_array(config('database.connections.mysql.host'), $validHosts)) {
+        $validHostsToSyncTo = config('syncer.valid_hosts', ['127.0.0.1', 'localhost']);
+        if (! in_array(config('database.connections.mysql.host'), $validHostsToSyncTo) && ! in_array(config('database.connections.mysql.host'), $validHostsToSyncTo)) {
             $this->error('Can only sync to local');
             return;
         }
