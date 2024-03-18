@@ -10,7 +10,7 @@
     ],
     "require": {
         "php": "^8.2",
-        "enflow/error-templates": "^1.0",
+        "enflow/error-templates": "^2.0",
         "laravel/framework": "^10.0|^11.0",
         "doctrine/dbal": "^2.5|^3.1.4|^4.0",
         "spatie/laravel-blink": "^1.0",

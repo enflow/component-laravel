@@ -10,6 +10,8 @@ use Facade\Ignition\Facades\Flare as FacadeFlare;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler as IlluminateExceptionHandler;
 use Illuminate\Database\Schema\Builder as SchemaBuilder;
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use LogicException;
@@ -35,9 +37,14 @@ class LaravelServiceProvider extends ServiceProvider
 
         view()->addNamespace('component-laravel', __DIR__ . '/../resources');
 
-        if (! $this->app->runningInConsole() && ! $this->app->make(IlluminateExceptionHandler::class) instanceof AbstractExceptionHandler && ! View::exists('errors.500')) {
+        if (! $this->app->runningInConsole() && ! $this->app->make(IlluminateExceptionHandler::class) instanceof AbstractExceptionHandler && ! View::exists('errors.500') && version_compare($this->app->version(), '11.0', '<')) {
             throw new LogicException("Unable to setup custom error template. Please extend the '\\Enflow\\Component\\Laravel\\AbstractExceptionHandler' class in your '\\App\\Exceptions\\Handler' file.");
         }
+
+        // Ensure the error views are loaded from the `error-templates` package
+        config()->set('view.paths', array_merge([
+            base_path('vendor/enflow/error-templates'),
+        ], config()->get('view.paths', [])));
 
         // Allow browsersync to be used in Twig
         // @TODO: move to Tower.
