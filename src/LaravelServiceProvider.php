@@ -43,7 +43,7 @@ class LaravelServiceProvider extends ServiceProvider
 
         // Ensure the error views are loaded from the `error-templates` package
         config()->set('view.paths', array_merge([
-            base_path('vendor/enflow/error-templates'),
+            base_path('vendor/enflow/error-templates/dist'),
         ], config()->get('view.paths', [])));
 
         // Allow browsersync to be used in Twig
