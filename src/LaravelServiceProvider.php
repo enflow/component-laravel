@@ -2,6 +2,7 @@
 
 namespace Enflow\Component\Laravel;
 
+use Carbon\Carbon;
 use Enflow\Component\Laravel\Cluster\ClusterStore;
 use Enflow\Component\Laravel\Console\Commands\MonitorHorizonWorker;
 use Enflow\Component\Laravel\Console\Commands\SessionGarbageCollector;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use LogicException;
 use Spatie\LaravelIgnition\Facades\Flare as SpatieFlare;
+use function PHP81_BC\strftime;
 
 class LaravelServiceProvider extends ServiceProvider
 {
@@ -25,7 +27,7 @@ class LaravelServiceProvider extends ServiceProvider
             __DIR__ . '/../config/laravel.php', 'laravel'
         );
 
-        $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
+        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
 
         if ($this->app->bound('twig') && $twig = $this->app->resolved('twig')) {
             $twig->getExtension('core')->setTimezone('Europe/Amsterdam');
@@ -45,6 +47,12 @@ class LaravelServiceProvider extends ServiceProvider
         config()->set('view.paths', array_merge([
             base_path('vendor/enflow/error-templates/dist'),
         ], config()->get('view.paths', [])));
+
+        // Add `CommandNotFoundException` to the list of exceptions that should not be reported
+        $exceptionHandler = $this->app->make(IlluminateExceptionHandler::class);
+        if (method_exists($exceptionHandler, 'dontReport')) {
+            $exceptionHandler->dontReport(\Symfony\Component\Console\Exception\CommandNotFoundException::class);
+        }
 
         // Allow browsersync to be used in Twig
         // @TODO: move to Tower.
@@ -89,6 +97,8 @@ class LaravelServiceProvider extends ServiceProvider
         }
 
         $this->setupSessionGarbageCollector();
+
+        $this->setupCarbonFormatLocalizedPolyfill();
     }
 
     public function register()
@@ -135,5 +145,14 @@ class LaravelServiceProvider extends ServiceProvider
                 'session.lottery' => [0, 1],
             ]);
         }
+    }
+
+    private function setupCarbonFormatLocalizedPolyfill(): void
+    {
+        if (! class_exists(Carbon::class)) {
+            return;
+        }
+
+        Carbon::macro('formatLocalized', fn(string $format) => strftime($format, $this, $this->locale));
     }
 }
