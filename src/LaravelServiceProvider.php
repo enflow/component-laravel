@@ -117,17 +117,19 @@ class LaravelServiceProvider extends ServiceProvider
         $this->mailSettings();
     }
 
-    private function mailSettings()
+    private function mailSettings(): void
     {
-        if (in_array($this->app->environment(), ['testing']) && ! in_array(config('mail.driver'), ['log', 'array'])) {
-            config(['mail.driver' => 'array']);
+        $driverKey = version_compare(Application::VERSION, '11.0', '>=') ? 'default' : 'driver';
+
+        if (in_array($this->app->environment(), ['testing']) && ! in_array(config('mail.' . $driverKey), ['log', 'array'])) {
+            config(['mail.' . $driverKey => 'array']);
         }
 
         if (config('mail.from.name') === null) {
             config(['mail.from.name' => config('app.name')]);
         }
 
-        if (! in_array(config('mail.driver'), ['log', 'array']) && (config('mail.from.address') === null || config('mail.from.address') === 'hello@example.com')) {
+        if (! in_array(config('mail.' . $driverKey), ['log', 'array']) && (config('mail.from.address') === null || config('mail.from.address') === 'hello@example.com')) {
             throw new MailConfigurationMissingException('Mail configuration is missing. Please set the "mail.from.address" configuration value.');
         }
     }
