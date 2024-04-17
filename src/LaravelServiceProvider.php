@@ -44,9 +44,9 @@ class LaravelServiceProvider extends ServiceProvider
         }
 
         // Ensure the error views are loaded from the `error-templates` package
-        config()->set('view.paths', array_merge([
+        config()->set('view.paths', array_merge(config()->get('view.paths', []), [
             base_path('vendor/enflow/error-templates/dist'),
-        ], config()->get('view.paths', [])));
+        ]));
 
         // Add `CommandNotFoundException` to the list of exceptions that should not be reported
         $exceptionHandler = $this->app->make(IlluminateExceptionHandler::class);
