@@ -17,7 +17,7 @@
         "itsgoingd/clockwork": "^4.0|^5.0",
         "nunomaduro/collision": "^7.0|^8.0|^9.0",
         "spatie/once": "^2.0|^3.0",
-        "php81_bc/strftime": "^0.7.4"
+        "php81_bc/strftime": "^0.7.5"
     },
     "autoload": {
         "psr-4": {
