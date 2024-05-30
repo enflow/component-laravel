@@ -19,8 +19,10 @@ class MigrationServiceProvider extends ServiceProvider implements DeferrableProv
             {
                 public function run($paths = [], array $options = [])
                 {
-                    if (app()->environment() === 'local' && !in_array(config('database.connections.' . config('database.default') . '.host'), ['127.0.0.1', 'localhost', 'mysql', 'db.clu0.enflow.nl'])) {
-                        $this->note('<error>Unable to migrate: connected to external database source.</error>');
+                    $connection = $this->resolveConnection($this->connection);
+
+                    if (app()->environment('local') && !in_array($connection->getConfig('host'), ['127.0.0.1', 'localhost', 'mysql', 'db.clu0.enflow.nl']) && !str_ends_with($connection->getConfig('host'), '.local')) {
+                        $this->output->writeln('<error>Unable to migrate: connected to external database source.</error>');
 
                         return [];
                     }
