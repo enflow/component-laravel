@@ -59,7 +59,9 @@ class ResetCredentials extends Command
 
             $this->info($table . ": updated {$count} records.");
 
-            $this->table(['Email', 'Password'], (clone $query)->take(5)->get()->map(fn($item) => [$item->email, $password]));
+            $this->table(['Email', 'Password'], (clone $query)->take(5)->get()->map(function ($item) use ($password) {
+                return [$item->email ?? 'unknown email', $password];
+            }));
         });
     }
 
