@@ -92,7 +92,7 @@ class LaravelServiceProvider extends ServiceProvider
 
         if (class_exists(\Laravel\Horizon\Horizon::class)) {
             $this->app->booted(function () {
-                $this->app->make(Schedule::class)->command(MonitorHorizonWorker::class)->everyFifteenMinutes();
+                $this->app->make(Schedule::class)->command(MonitorHorizonWorker::class)->everyFiveMinutes();
             });
         }
 
