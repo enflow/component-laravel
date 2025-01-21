@@ -28,7 +28,7 @@ class HorizonNotRunningNotification extends Notification
             });
     }
 
-    public static function shouldSend(): bool
+    public static function sendable(): bool
     {
         if (! app()->environment('production')) {
             return false;

@@ -30,7 +30,7 @@ class MonitorHorizonWorker extends Command
             report(new HorizonNotRunningException());
 
             // To not overload notifications, only send a notification in production
-            if (HorizonNotRunningNotification::shouldSend()) {
+            if (HorizonNotRunningNotification::sendable()) {
                 Notification::route('slack', config('laravel.horizon_monitor_slack_notification_url'))
                     ->notify(new HorizonNotRunningNotification());
 
