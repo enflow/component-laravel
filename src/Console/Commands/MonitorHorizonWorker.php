@@ -22,6 +22,12 @@ class MonitorHorizonWorker extends Command
             return 1;
         }
 
+        if (! config('laravel.uses_queue')) {
+            $this->warn("Skipping horizon check; Queue is marked as not used in this project.");
+
+            return 1;
+        }
+
         $masterSupervisorRepository = app(MasterSupervisorRepository::class);
 
         if (! $masterSupervisorRepository->all()) {
