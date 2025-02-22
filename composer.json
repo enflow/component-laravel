@@ -9,12 +9,12 @@
         }
     ],
     "require": {
-        "php": "^8.2",
+        "php": "^8.3",
         "enflow/error-templates": "^2.0",
-        "laravel/framework": "^10.0|^11.0",
+        "laravel/framework": "^11.0|^12.0",
         "spatie/laravel-blink": "^1.0",
         "itsgoingd/clockwork": "^4.0|^5.0",
-        "nunomaduro/collision": "^7.0|^8.0|^9.0",
+        "nunomaduro/collision": "^7.0|^8.0|^9.0|^10.0",
         "spatie/once": "^2.0|^3.0",
         "php81_bc/strftime": "^0.7.5"
     },
