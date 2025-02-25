@@ -61,7 +61,7 @@ class HorizonNotRunningNotification extends Notification
         // Send notification once we cross the 7-min threshold
         if ($downSince->diffInMinutes(now()) >= 7) {
             // Mark that we have sent the notification, so we don't send it again for 30 minutes.
-            cache()->remember($notifiedOnceKey, now()->addMinutes(30), true);
+            cache()->set($notifiedOnceKey, true, now()->addMinutes(30));
 
             return true;
         }
