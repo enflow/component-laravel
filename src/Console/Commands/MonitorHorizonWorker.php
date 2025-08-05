@@ -19,13 +19,13 @@ class MonitorHorizonWorker extends Command
         if (! InstalledVersions::isInstalled('laravel/horizon')) {
             $this->warn("Skipping horizon check; Horizon is not used in this project.");
 
-            return 1;
+            return 0;
         }
 
         if (! config('laravel.uses_queue')) {
             $this->warn("Skipping horizon check; Queue is marked as not used in this project.");
 
-            return 1;
+            return 0;
         }
 
         $masterSupervisorRepository = app(MasterSupervisorRepository::class);
