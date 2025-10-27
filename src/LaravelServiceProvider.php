@@ -112,6 +112,17 @@ class LaravelServiceProvider extends ServiceProvider
                     'logging.channels.stack.channels' => ['single'],
                 ]);
             }
+
+            // This ensures we don't track `git` info due to https://github.com/spatie/flare-client-php/issues/51
+            $collects = config('flare.collects');
+            if (array_key_exists('git_info', $collects)) {
+                unset($collects['git_info']);
+
+                // Remove `git_info` from Flare collect
+                config([
+                    'flare.collects' => $collects,
+                ]);
+            }
         }
 
         $this->mailSettings();
