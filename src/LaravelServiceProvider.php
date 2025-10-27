@@ -105,7 +105,6 @@ class LaravelServiceProvider extends ServiceProvider
     {
         if (config('flare.key')) {
             // Everything should be configured in the app. We just ensure there that local & testing exceptions aren't sent to Flare
-
             if ($this->app->environment('local', 'testing')) {
                 config([
                     'flare.key' => null,
@@ -114,11 +113,9 @@ class LaravelServiceProvider extends ServiceProvider
             }
 
             // This ensures we don't track `git` info due to https://github.com/spatie/flare-client-php/issues/51
-            $collects = config('flare.collects');
-            if (array_key_exists('git_info', $collects)) {
+            if (array_key_exists('git_info', $collects = config('flare.collects'))) {
                 unset($collects['git_info']);
 
-                // Remove `git_info` from Flare collect
                 config([
                     'flare.collects' => $collects,
                 ]);
