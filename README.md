@@ -33,16 +33,6 @@ class Handler extends AbstractExceptionHandler
 }
 ```
 
-To enable Bugsnag:
-1. Add a new Laravel project to your Bugsnag account and enable Slack notitifications to #failure
-2. Add Bugsnag to your services.php file:
-```
-    'bugsnag' => [
-        'api_key' => env('BUGSNAG_API_KEY'),
-    ],
-```
-3. Add the BUGSNAG_API_KEY to your .env file
-
 ## Commands
 
 ### db:sync
