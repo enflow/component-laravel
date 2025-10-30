@@ -113,7 +113,7 @@ class LaravelServiceProvider extends ServiceProvider
             }
 
             // This ensures we don't track `git` info due to https://github.com/spatie/flare-client-php/issues/51
-            if (array_key_exists('git_info', $collects = config('flare.collects'))) {
+            if (($collects = config('flare.collects')) && array_key_exists('git_info', $collects)) {
                 unset($collects['git_info']);
 
                 config([
