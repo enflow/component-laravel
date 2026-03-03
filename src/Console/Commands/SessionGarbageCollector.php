@@ -6,8 +6,8 @@ use Illuminate\Console\Command;
 
 class SessionGarbageCollector extends Command
 {
-    protected $signature = 'session:gc';
-    protected $description = 'Clears the sessions garbage if applicable to the current driver';
+    protected string $signature = 'session:gc';
+    protected string $description = 'Clears the sessions garbage if applicable to the current driver';
 
     public function handle()
     {

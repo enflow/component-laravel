@@ -14,7 +14,7 @@ class DbSync extends Command
 {
     use CommandHelpers;
 
-    protected $signature = 'db:sync {--hostname=} {--port=} {--username=} {--password=} {--database=}';
+    protected $signature = 'db:sync {--hostname=} {--port=} {--username=} {--password=} {--database=} {--force}';
 
     protected $description = 'Sync the database with a remote DB server';
 
@@ -31,13 +31,13 @@ class DbSync extends Command
             return;
         }
 
-        if (app()->environment() == 'production') {
+        if (! $this->option('force') && app()->environment() == 'production') {
             $this->error('Cannot run in production');
             return;
         }
 
         $validHostsToSyncTo = config('syncer.valid_hosts', ['127.0.0.1', 'localhost']);
-        if (! in_array(config('database.connections.mysql.host'), $validHostsToSyncTo) && ! in_array(config('database.connections.mysql.host'), $validHostsToSyncTo)) {
+        if (! $this->option('force') && ! in_array(config('database.connections.mysql.host'), $validHostsToSyncTo) && ! in_array(config('database.connections.mysql.host'), $validHostsToSyncTo)) {
             $this->error('Can only sync to local');
             return;
         }

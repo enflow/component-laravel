@@ -146,7 +146,7 @@ class LaravelServiceProvider extends ServiceProvider
     {
         // Session garbage collection in background
         // Issue is that 2% of requests have a long request time due to garbage collection. This should be run in the background.
-        if (config('session.driver') === 'file' && ! app()->environment('local', 'testing')) {
+        if (config('session.driver') === 'file' && config('session.scheduled_gc', true) && ! app()->environment('local', 'testing')) {
             // This creates a consistent minute based on the project path to avoid all projects running the garbage collector at the same time.
             $minute = ((int)sprintf('%u', crc32(base_path() . '|' . SessionGarbageCollector::class))) % 60;
 
