@@ -18,7 +18,7 @@ class DbSync extends Command
 
     protected $description = 'Sync the database with a remote DB server';
 
-    public function handle()
+    public function handle(): void
     {
         $hostname = $this->option('hostname') ?: (config('syncer.hostname') ?? $this->ask('Syncer hostname?', 'db.ha0.enflow.network'));
         $port = $this->option('port') ?: (config('syncer.port') ?? 3306);
@@ -36,8 +36,10 @@ class DbSync extends Command
             return;
         }
 
+        $connection = config('database.connections.' . config('database.default'));
+
         $validHostsToSyncTo = config('syncer.valid_hosts', ['127.0.0.1', 'localhost']);
-        if (! $this->option('force') && ! in_array(config('database.connections.mysql.host'), $validHostsToSyncTo) && ! in_array(config('database.connections.mysql.host'), $validHostsToSyncTo)) {
+        if (! $this->option('force') && ! in_array(@gethostbyname($connection['host']), $validHostsToSyncTo) && ! in_array($connection['host'], $validHostsToSyncTo)) {
             $this->error('Can only sync to local');
             return;
         }
@@ -46,55 +48,59 @@ class DbSync extends Command
             $this->call('down');
         }
 
-        try {
-            $this->info('Exporting ' . $database);
+        $this->info('Exporting ' . $database);
 
-            $columnStatistics = ($mysqlVersion = $this->mysqlVersion()) && version_compare($mysqlVersion, '8.0', '>=') ? '--column-statistics=0' : null;
-            $flags = "{$columnStatistics} --opt --single-transaction --extended-insert --skip-add-locks --skip-lock-tables --no-tablespaces --quick -u{$username} -p{$password} -h{$hostname} --port={$port}";
+        $command = match ($connection['driver'] ?? config('syncer.driver')) {
+            'mysql' => 'mysqldump',
+            'mariadb' => 'mariadb-dump',
+            default => throw \Exception('Invalid dump command configured'),
+        };
 
-            $ignores = collect(config('syncer.excluded', []))->map(fn(string $table) => '--ignore-table=' . $database . '.' . $table)->implode(' ');
+        $columnStatistics = ($mysqlVersion = $this->mysqlVersion()) && version_compare($mysqlVersion, '8.0', '>=') ? '--column-statistics=0' : null;
+        $flags = "{$columnStatistics} --opt --single-transaction --extended-insert --skip-add-locks --skip-lock-tables --no-tablespaces --quick -u{$username} -p{$password} -h{$hostname} --port={$port}";
 
-            $commands = [
-                "structure" => "mysqldump {$flags} --no-data {$database} >",
-                "data" => "mysqldump {$flags} --no-create-info {$ignores} {$database} >>",
-            ];
+        $ignores = collect(config('syncer.excluded', []))->map(fn(string $table) => '--ignore-table=' . $database . '.' . $table)->implode(' ');
 
-            $tmpFiles = [];
-            foreach ($commands as $name => $command) {
-                $this->info("Exporting {$name}");
+        $commands = [
+            "structure" => "{$command} {$flags} --no-data {$database} >",
+            "data" => "{$command} {$flags} --no-create-info {$ignores} {$database} >>",
+        ];
 
-                $tmpFile = tempnam(sys_get_temp_dir(), "db_sync_");
+        $tmpFiles = [];
+        foreach ($commands as $name => $command) {
+            $this->info("Exporting {$name}");
 
-                $this->timeProcess(
-                    Process::fromShellCommandline($command . " {$tmpFile}")->setTimeout(300)
-                );
+            $tmpFile = tempnam(sys_get_temp_dir(), "db_sync_");
 
-                $tmpFiles[] = $tmpFile;
-            }
+            $this->timeProcess(
+                Process::fromShellCommandline($command . " {$tmpFile}")->setTimeout(300)
+            );
 
-            $this->info('Dropping tables');
-            $this->dropAllTables();
+            $tmpFiles[] = $tmpFile;
+        }
 
-            $this->info('Importing SQL');
-            $this->importAndDeleteSqlFiles($tmpFiles);
+        $this->info('Dropping tables');
+        $this->dropAllTables();
 
-            $this->info('Optimizing database');
-            $this->call('db:optimize', ['--force' => true]);
+        $this->info('Importing SQL');
+        $this->importAndDeleteSqlFiles($tmpFiles);
 
-            $this->info('Resetting passwords');
-            $this->resetPasswords();
+        $this->info('Optimizing database');
+        $this->call('db:optimize', ['--force' => true]);
 
-            $this->info("Running migrations");
-            $this->call('migrate', ['--force' => true]);
+        $this->info('Resetting passwords');
+        $this->resetPasswords();
 
-            $this->info("Clearing cache");
-            $this->call('cache:clear');
+        $this->info("Running migrations");
+        $this->call('migrate', ['--force' => true]);
 
-            event(new DatabaseSynced());
-        } finally {
-            if (app()->environment() !== 'local') {
-                $this->call('up');
-            }
+        $this->info("Clearing cache");
+        $this->call('cache:clear');
+
+        event(new DatabaseSynced());
+
+        if (app()->environment() !== 'local') {
+            $this->call('up');
         }
     }
 
