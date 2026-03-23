@@ -17,7 +17,7 @@ class DbImport extends Command
 
     public function handle()
     {
-        $connection = config('database.connections.mysql');
+        $connection = config('database.connections.' . config('database.default'));
 
         if (! $this->option('force') && ! $this->confirm("Are you sure you want to import into {$connection['database']}? You might lose data.")) {
             return;
@@ -56,11 +56,16 @@ class DbImport extends Command
 
     private function buildCommand(array $connection, string $file)
     {
+        $command = match ($connection['driver']) {
+            'mysql' => 'mysql',
+            'mariadb' => 'mariadb',
+            default => throw \Exception('Invalid dump command configured'),
+        };
         $auth = "-u{$connection['username']} -p{$connection['password']} -h{$connection['host']} {$connection['database']}";
 
         file_put_contents($tmpImportBefore = tempnam(sys_get_temp_dir(), 'before'), 'SET autocommit=0;SET unique_checks=0;SET foreign_key_checks=0;');
         file_put_contents($tmpAfterBefore = tempnam(sys_get_temp_dir(), 'after'), 'COMMIT; SET unique_checks=1; SET foreign_key_checks=1;');
 
-        return "cat {$tmpImportBefore} {$file} {$tmpAfterBefore} | mysql {$auth}";
+        return "cat {$tmpImportBefore} {$file} {$tmpAfterBefore} | {$command} {$auth}";
     }
 }

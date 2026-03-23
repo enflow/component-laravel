@@ -17,7 +17,7 @@ class ResetCredentials extends Command
     protected $signature = 'reset-credentials {--password=} {--force}';
     protected $description = 'Resets all credentials to a given string for local debugging.';
 
-    public function handle()
+    public function handle(): void
     {
         if (app()->environment() !== 'local' && ! $this->option('force')) {
             if (app()->environment('production')) {
@@ -31,8 +31,10 @@ class ResetCredentials extends Command
             return;
         }
 
-        if (! in_array(gethostbyname(config('database.connections.mysql.host')), ['127.0.0.1', 'localhost'])) {
-            $this->error('Cannot sync: MySQL host is configured to an external connection.');
+        $connection = config('database.connections.' . config('database.default'));
+        $validHostsToSyncTo = config('syncer.valid_hosts', ['127.0.0.1', 'localhost']);
+        if (! $this->option('force') && ! in_array(@gethostbyname($connection['host']), $validHostsToSyncTo) && ! in_array($connection['host'], $validHostsToSyncTo)) {
+            $this->error('Cannot sync: DB host is configured to an external connection.');
 
             return;
         }

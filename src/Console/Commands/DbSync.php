@@ -56,7 +56,7 @@ class DbSync extends Command
             default => throw \Exception('Invalid dump command configured'),
         };
 
-        $columnStatistics = ($mysqlVersion = $this->mysqlVersion()) && version_compare($mysqlVersion, '8.0', '>=') ? '--column-statistics=0' : null;
+        $columnStatistics = $command === 'mysqldump' && ($mysqlVersion = $this->mysqlVersion()) && version_compare($mysqlVersion, '8.0', '>=') ? '--column-statistics=0' : null;
         $flags = "{$columnStatistics} --opt --single-transaction --extended-insert --skip-add-locks --skip-lock-tables --no-tablespaces --quick -u{$username} -p{$password} -h{$hostname} --port={$port}";
 
         $ignores = collect(config('syncer.excluded', []))->map(fn(string $table) => '--ignore-table=' . $database . '.' . $table)->implode(' ');
