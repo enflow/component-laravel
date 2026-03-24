@@ -19,7 +19,7 @@ class DbExport extends Command
     {
         $file = $this->argument('file') ?? $this->ask('Please provide a file name to export to', 'db.sql');
 
-        $connection = config('database.connections.mysql');
+        $connection = config('database.connections.' . config('database.default'));
         if (count(Arr::only($connection, ['host', 'username', 'password', 'database'])) < 4) {
             $this->error('All database variables are required.');
             return;
@@ -38,12 +38,18 @@ class DbExport extends Command
 
     private function buildCommand(array $connection, string $file)
     {
-        $columnStatistics = version_compare($this->mysqlVersion(), '8.0', '>=') ? '--column-statistics=0' : null;
+        $command = match ($connection['driver']) {
+            'mysql' => 'mysqldump',
+            'mariadb' => 'mariadb-dump',
+            default => throw \Exception('Invalid driver configured'),
+        };
+
+        $columnStatistics = $command === 'mysqldump' && version_compare($this->mysqlVersion(), '8.0', '>=') ? '--column-statistics=0' : null;
 
         $flags = "{$columnStatistics} --ssl-mode=REQUIRED --opt --single-transaction --extended-insert --skip-lock-tables --quick --routines --skip-add-locks";
 
         $auth = "-u{$connection['username']} -p{$connection['password']} -h{$connection['host']} {$connection['database']}";
 
-        return "mysqldump {$flags} {$auth} > $file";
+        return "{$command} {$flags} {$auth} > $file";
     }
 }

@@ -14,11 +14,11 @@ class DbOptimize extends Command
 
     protected $signature = 'db:optimize {--force}';
 
-    protected $description = 'Optimizes the database by running `mysqlcheck`';
+    protected $description = 'Optimizes the database.';
 
     public function handle()
     {
-        $connection = config('database.connections.mysql');
+        $connection = config('database.connections.' . config('database.default'));
 
         if (! $this->option('force') && ! $this->confirm("Are you sure you want to optimize {$connection['database']}? This might take some time depending on the database size.")) {
             return;
@@ -42,6 +42,12 @@ class DbOptimize extends Command
 
     private function buildCommand(array $connection)
     {
-        return "mysqlcheck -o -u{$connection['username']} -p{$connection['password']} -h{$connection['host']} {$connection['database']}";
+        $command = match ($connection['driver']) {
+            'mysql' => 'mysqlcheck',
+            'mariadb' => 'mariadb-check',
+            default => throw \Exception('Invalid driver configured'),
+        };
+
+        return "{$command} -o -u{$connection['username']} -p{$connection['password']} -h{$connection['host']} {$connection['database']}";
     }
 }
