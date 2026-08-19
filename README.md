@@ -37,7 +37,24 @@ class Handler extends AbstractExceptionHandler
 
 ### db:sync
 
-db:sync enabled you to mysqldump a production database to your local machine and import it automatically. 
+db:sync enabled you to mysqldump a production database to your local machine and import it automatically.
+
+All table **structures** are always dumped. Restrict which tables' **data** is copied in `config/syncer.php`:
+
+```php
+return [
+    // Allowlist: only these tables' data is dumped. Safer than excluding, because new tables are skipped by default.
+    'included' => [
+        'migrations',
+        'posts',
+    ],
+
+    // Blocklist: skip data for these tables. When both are set, `excluded` is subtracted from `included`.
+    'excluded' => [
+        'failed_jobs',
+    ],
+];
+```
 
 #### Performance
 To improve import time of db:sync script (tested with a 2GB database) takes ~60 min, just to import.

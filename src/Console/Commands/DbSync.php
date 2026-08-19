@@ -59,11 +59,11 @@ class DbSync extends Command
         $columnStatistics = $command === 'mysqldump' && ($mysqlVersion = $this->mysqlVersion()) && version_compare($mysqlVersion, '8.0', '>=') ? '--column-statistics=0' : null;
         $flags = "{$columnStatistics} --opt --single-transaction --extended-insert --skip-add-locks --skip-lock-tables --no-tablespaces --quick -u{$username} -p{$password} -h{$hostname} --port={$port}";
 
-        $ignores = collect(config('syncer.excluded', []))->map(fn(string $table) => '--ignore-table=' . $database . '.' . $table)->implode(' ');
+        $dataDumpTarget = $this->dataDumpTarget($database);
 
         $commands = [
             "structure" => "{$command} {$flags} --no-data {$database} >",
-            "data" => "{$command} {$flags} --no-create-info {$ignores} {$database} >>",
+            "data" => "{$command} {$flags} --no-create-info {$dataDumpTarget} >>",
         ];
 
         $tmpFiles = [];
@@ -102,6 +102,22 @@ class DbSync extends Command
         if (app()->environment() !== 'local') {
             $this->call('up');
         }
+    }
+
+    private function dataDumpTarget(string $database): string
+    {
+        $excluded = collect(config('syncer.excluded', []));
+        $included = collect(config('syncer.included', []))->filter()->diff($excluded)->values();
+
+        if ($included->isNotEmpty()) {
+            $this->info('Including data for: ' . $included->implode(', '));
+
+            return $database . ' ' . $included->implode(' ');
+        }
+
+        $ignores = $excluded->map(fn (string $table) => '--ignore-table=' . $database . '.' . $table)->implode(' ');
+
+        return trim($ignores . ' ' . $database);
     }
 
     private function dropAllTables(): void
